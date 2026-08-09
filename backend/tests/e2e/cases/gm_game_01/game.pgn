@@ -1,0 +1,19 @@
+[Event "Division I"]
+[Site "Chess.com"]
+[Date "2024.07.19"]
+[Round "01-02"]
+[White "Caruana, Fabiano"]
+[Black "Firouzja, Alireza"]
+[Result "1-0"]
+[WhiteElo "2763"]
+[BlackElo "2873"]
+[TimeControl "600+2"]
+[Link "https://www.chess.com/events/2024-champions-chess-tour-crunchlabs-masters-division-1/01-02/Caruana_Fabiano-Firouzja_Alireza"]
+
+1. c4 {[%clk 0:10:02]} 1... c6 {[%clk 0:10:01]} 2. Nf3 {[%clk 0:10:02]} 2... d5
+{[%clk 0:10:02]} 3. g3 {[%clk 0:10:03]} 3... Bg4 {[%clk 0:10:02]} 4. Ne5 {[%clk
+0:10:03]} 4... Bf5 {[%clk 0:10:02]} 5. Qb3 {[%clk 0:09:51]} 5... Qb6 {[%clk
+0:09:50]} 6. cxd5 {[%clk 0:09:25]} 6... Qxb3 {[%clk 0:08:24]} 7. axb3 {[%clk
+0:09:27]} 7... Be4 {[%clk 0:08:25]} 8. dxc6 {[%clk 0:08:57]} 8... Bxh1 {[%clk
+0:06:01]} 9. Rxa7 {[%clk 0:08:52]} (9. Rxa7 Rxa7 10. c7 e6 11. c8=Q+ Ke7 12.
+Qxb8 Kf6 13. Ng4+ Kg6 14. Ne5+ Kf6 15. Nd7+ Ke7 16. Nxf8 f6 17. Qxa7) 1-0

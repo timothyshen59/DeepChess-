@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+dist/
+dist-ssr/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode/
+
+# Secrets
+.env
+
+# Claude Code local state (not meant to be shared)
+.claude/
+
+# Scratch output from manual pipeline runs (backend/) -- regenerable, not fixtures
+annotated_moves.json
+strategic_explanations.json
+tactics_report.json

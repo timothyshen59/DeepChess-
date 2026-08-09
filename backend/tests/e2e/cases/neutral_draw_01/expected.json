@@ -1,0 +1,27 @@
+{
+  "case_id": "neutral_draw_01",
+  "opening_agent": {
+    "eco": "C25",
+    "name_contains": "Vienna Game",
+    "variation_contains": "Max Lange Defense",
+    "deviation": {
+      "status": "deviated",
+      "move_number": 3,
+      "player_color": "white",
+      "played_san": "Bb5",
+      "better_line_san": "['Bc4', 'Nf6', 'd3', 'Na5']"
+    },
+    "minimum_critical_mistakes": 0
+  },
+  "tactics_agent": {
+    "minimum_critical_mistakes": 0,
+    "required_mistakes": []
+  },
+  "coordinator": {
+    "minimum_lessons": 0,
+    "maximum_lessons": 5
+  },
+  "pipeline_health": {
+    "allowed_warning_codes": []
+  }
+}

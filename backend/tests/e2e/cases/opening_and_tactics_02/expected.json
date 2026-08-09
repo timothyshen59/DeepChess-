@@ -1,0 +1,50 @@
+{
+  "case_id": "opening_and_tactics_02",
+  "opening_agent": {
+    "eco": "A00",
+    "name_contains": "Hungarian Opening",
+    "variation_contains": "",
+    "deviation": {
+      "status": "deviated",
+      "move_number": 1,
+      "player_color": "white",
+      "played_san": "g3",
+      "better_line_san": "['e4', 'c5', 'Nf3', 'd6', 'd4']"
+    },
+    "minimum_critical_mistakes": 1
+  },
+  "tactics_agent": {
+    "minimum_critical_mistakes": 3,
+    "required_mistakes": [
+      {
+        "move_number": 40,
+        "player_color": "black",
+        "category": "defensive",
+        "motif": "hanging_piece",
+        "minimum_cp_loss": 5000
+      },
+      {
+        "move_number": 39,
+        "player_color": "white",
+        "category": "defensive",
+        "motif": "hanging_piece",
+        "minimum_cp_loss": 5000
+      },
+      {
+        "move_number": 15,
+        "player_color": "white",
+        "category": "defensive",
+        "motif": "king_safety",
+        "minimum_cp_loss": 250
+      }
+    ]
+  },
+  "coordinator": {
+    "minimum_lessons": 5,
+    "maximum_lessons": 10,
+    "first_priority_source": "tactics"
+  },
+  "pipeline_health": {
+    "allowed_warning_codes": []
+  }
+}

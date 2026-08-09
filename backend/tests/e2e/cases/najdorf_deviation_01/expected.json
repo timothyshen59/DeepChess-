@@ -1,0 +1,20 @@
+{
+  "case_id": "najdorf_deviation_01",
+  "_hint": "Reused from services/coaching/opening/tests/fixtures/najdorf_deviation.pgn, built to match plan.md's own worked example. UPDATED after swapping in the full lichess-org/chess-openings ECO index (services/coaching/opening/eco/build_eco_index.py): the fuller dataset now classifies this line more specifically as eco=B92 'Najdorf Variation, Opocensky Variation' (this game's 6.Be2 is exactly the Opocensky sub-line) rather than the old hand-seed's generic B90 'Najdorf Variation', matched_plies=11 (was 10). Deviation detection is UNCHANGED (it comes from the separate Polyglot book, not the ECO index) -- still status='deviated' at move_number=7/black, played_san='h6', better_move_san='Be7'. opening critical_mistakes was 0 on this isolated game. tactics found 2 mild mistakes (~34cp each). All placeholders below are deliberately wrong strings/impossible thresholds -- review against your own run before trusting any of it.",
+  "opening_agent": {
+    "eco": "B92",
+    "name_contains": "Sicilian Defense",
+    "variation_contains": "Najdorf Variation",
+    "minimum_matched_plies": 11,
+    "deviation": {
+      "status": "deviated",
+      "move_number": 7,
+      "player_color": "black",
+      "played_san": "h6",
+      "better_move_san": "Be7"
+    }
+  },
+  "pipeline_health": {
+    "allowed_warning_codes": []
+  }
+}

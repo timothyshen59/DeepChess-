@@ -1,0 +1,35 @@
+{
+  "_readme": "Seed dataset for local dev/testing only. Per the architecture plan, production data should be generated offline from the same master-game PGN corpus that backs the Polyglot book, classified by eco/eco_index.py. Entries here are deliberately limited to games that are safe to state as historical fact; ECO codes with no entry return an empty list rather than a guess.",
+  "B90": [
+    {
+      "white": "Garry Kasparov",
+      "black": "Viswanathan Anand",
+      "event": "PCA World Chess Championship",
+      "year": 1995,
+      "eco": "B90"
+    },
+    {
+      "white": "Magnus Carlsen",
+      "black": "Hikaru Nakamura",
+      "event": "Sicilian Defense: Najdorf Variation",
+      "year": 2019,
+      "eco": "B90"
+    },
+    {
+      "white": "Bobby Fischer",
+      "black": "Bent Larsen",
+      "event": "Candidates Match",
+      "year": 1971,
+      "eco": "B90"
+    }
+  ],
+  "C65": [
+    {
+      "white": "Garry Kasparov",
+      "black": "Vladimir Kramnik",
+      "event": "World Chess Championship (Berlin Defense)",
+      "year": 2000,
+      "eco": "C65"
+    }
+  ]
+}

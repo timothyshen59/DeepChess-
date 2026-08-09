@@ -1,0 +1,19 @@
+{
+  "case_id": "missed_defense_01",
+  "_hint": "Constructed fixture: the classic Scholar's Mate trap (1.e4 e5 2.Bc4 Nc6 3.Qh5 Nf6?? 4.Qxf7#) -- Black's 3...Nf6 ignores the Qh5+Bc4 threat on f7 entirely instead of defending (e.g. 3...g6). Verified with python-chess that 4.Qxf7# is real checkmate. A real run observed: tactics category='defensive', motif='mate_threat', cp_loss ~10049 (near mate-score) at move_number=3/black, better_move='g6'. Placeholders below are deliberately impossible/wrong -- review your own run before trusting any of it.",
+  "tactics_agent": {
+    "minimum_critical_mistakes": 1,
+    "required_mistakes": [
+      {
+        "move_number": 3,
+        "player_color": "black",
+        "category": "defensive",
+        "motif": "mate_threat",
+        "minimum_cp_loss": 5000
+      }
+    ]
+  },
+  "pipeline_health": {
+    "allowed_warning_codes": []
+  }
+}

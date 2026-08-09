@@ -1,0 +1,44 @@
+{
+  "case_id": "opening_and_tactics_01",
+  "opening_agent": {
+    "eco": "C50",
+    "name_contains": "Italian Game",
+    "variation_contains": "Blackburne-Kosti",
+    "minimum_matched_plies": 6,
+    "deviation": {
+      "status": "deviated",
+      "move_number": 3,
+      "player_color": "black",
+      "played_san": "Nd4",
+      "better_move_san": "Bc5"
+    },
+    "minimum_critical_mistakes": 2
+  },
+  "tactics_agent": {
+    "minimum_critical_mistakes": 2,
+    "required_mistakes": [
+      {
+        "move_number": 18,
+        "player_color": "black",
+        "category": "defensive",
+        "motif": "king_safety",
+        "minimum_cp_loss": 200
+      },
+      {
+        "move_number": 21,
+        "player_color": "black",
+        "category": "defensive",
+        "motif": "hanging_piece",
+        "minimum_cp_loss": 130
+      }
+    ]
+  },
+  "coordinator": {
+    "minimum_lessons": 5,
+    "maximum_lessons": 10,
+    "first_priority_source": "tactics"
+  },
+  "pipeline_health": {
+    "allowed_warning_codes": []
+  }
+}

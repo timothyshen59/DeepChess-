@@ -1,0 +1,38 @@
+[project]
+name = "chess-backend"
+version = "0.1.0"
+description = "Chess analysis API — move annotation + Elo prediction"
+requires-python = ">=3.11"
+
+dependencies = [
+    "fastapi[standard]>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "chess>=1.10.0",
+    "onnxruntime>=1.17.0",
+    "numpy>=1.26.0",
+    "langgraph>=1.2.10",
+    "anthropic>=0.120.2",
+    "python-chess>=1.999",
+    "pytest>=9.1.1",
+    "ruff>=0.15.22",
+    "httpx>=0.27.0",     # Lichess Opening Explorer client (services/opening_deviation)
+]
+
+[tool.uv]
+package = false
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",  # for testing the opening agent's async graph/route
+    "ruff>=0.4.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+markers = [
+    "e2e: full end-to-end tests using a real Stockfish engine and real graphs; requires a local `stockfish` binary. Run with `pytest -m e2e`; excluded by default via `pytest -m \"not e2e\"`.",
+]

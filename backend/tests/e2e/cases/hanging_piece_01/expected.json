@@ -1,0 +1,22 @@
+{
+  "case_id": "hanging_piece_01",
+  "_hint": "Constructed fixture (not a real game): White plays 10. Nd5?? which hangs the knight to 10...cxd5 for free. A real run observed: tactics category='defensive', motif='hanging_piece', cp_loss ~503-509 at move_number=10/white, better_move='Bg5'. Opening identification isn't the focus here (move order doesn't match a deep ECO entry) -- no opening_agent section included. Placeholders below are deliberately impossible/wrong -- review your own run before trusting any of it.",
+  "tactics_agent": {
+    "minimum_critical_mistakes": 1,
+    "required_mistakes": [
+      {
+        "move_number": 10,
+        "player_color": "white",
+        "category": "defensive",
+        "motif": "hanging_piece",
+        "minimum_cp_loss": 500
+      }
+    ]
+  },
+  "coordinator": {
+    "first_priority_source": "both"
+  },
+  "pipeline_health": {
+    "allowed_warning_codes": []
+  }
+}

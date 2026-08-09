@@ -1,0 +1,26 @@
+{
+  "case_id": "qgd_variation_01",
+  "opening_agent": {
+    "eco": "E10",
+    "name_contains": "Indian Defense",
+    "variation_contains": "Anti-Nimzo-Indian",
+    "minimum_matched_plies": 5,
+    "deviation": {
+      "status": "followed_theory"
+    },
+    "minimum_critical_mistakes": 0
+  },
+  "tactics_agent": {
+    "minimum_critical_mistakes": 0,
+    "maximum_critical_mistakes": 0,
+    "required_mistakes": []
+  },
+  "coordinator": {
+    "minimum_lessons": 0,
+    "maximum_lessons": 0,
+    "maximum_tactical_habits": 0
+  },
+  "pipeline_health": {
+    "allowed_warning_codes": []
+  }
+}
