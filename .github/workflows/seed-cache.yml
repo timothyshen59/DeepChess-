@@ -1,0 +1,34 @@
+name: Seed Lichess cache
+
+# Manual-only. Saves whatever opening_cache.sqlite3 exists on the dispatched
+# ref straight into the GitHub Actions cache under the same key ci.yml's
+# e2e-tests job restores from -- no live Lichess calls, no token needed.
+# Use this to bootstrap/refresh the CI cache from a real, already-warm
+# local file instead of letting CI rebuild it from scratch position by
+# position. Dispatch against a branch that actually has the file (it's
+# gitignored on main/dev, so you'll need a throwaway branch carrying it).
+on:
+  workflow_dispatch:
+    inputs:
+      cache_key:
+        description: "Cache key to save under (must match ci.yml's e2e-tests restore key)"
+        required: true
+        default: lichess-cache-v1
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Confirm the file exists on this ref
+        run: ls -la services/opening_deviation/data/opening_cache.sqlite3
+
+      - name: Save to cache
+        uses: actions/cache/save@v4
+        with:
+          path: backend/services/opening_deviation/data/opening_cache.sqlite3
+          key: ${{ inputs.cache_key }}
