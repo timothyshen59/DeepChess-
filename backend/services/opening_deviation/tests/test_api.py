@@ -25,7 +25,9 @@ from services.opening_deviation.models.opening import (
 class FakeService:
     def __init__(self) -> None:
         self.stats_by_fen: dict[str, ExplorerStats] = {}
-        self.classify_result = ClassificationResult(classification="MAINLINE", total_games=100, played_move_share=0.9)
+        self.classify_result = ClassificationResult(
+            classification="MAINLINE", total_games=100, played_move_share=0.9
+        )
         self.deviation_result = DeviationResult(found=False)
 
     async def get_stats(self, fen: str) -> ExplorerStats | None:

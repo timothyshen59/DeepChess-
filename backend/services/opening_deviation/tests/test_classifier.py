@@ -16,7 +16,9 @@ FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -"
 
 
 def _settings(**overrides) -> OpeningDeviationSettings:
-    defaults = dict(deviation_share_threshold=0.01, mainline_share_threshold=0.10, min_sample_games=50)
+    defaults = dict(
+        deviation_share_threshold=0.01, mainline_share_threshold=0.10, min_sample_games=50
+    )
     defaults.update(overrides)
     return OpeningDeviationSettings(**defaults)
 
@@ -29,10 +31,12 @@ def _stats(moves: list[CandidateMove]) -> ExplorerStats:
 class ClassifierTests(unittest.TestCase):
     def test_mainline_move(self) -> None:
         # 900/1000 share -- clearly mainline.
-        stats = _stats([
-            CandidateMove(uci="e2e4", white=500, draws=200, black=200),
-            CandidateMove(uci="d2d4", white=60, draws=20, black=20),
-        ])
+        stats = _stats(
+            [
+                CandidateMove(uci="e2e4", white=500, draws=200, black=200),
+                CandidateMove(uci="d2d4", white=60, draws=20, black=20),
+            ]
+        )
 
         result = classify("e2e4", stats, _settings())
 
@@ -42,10 +46,12 @@ class ClassifierTests(unittest.TestCase):
     def test_sideline_move(self) -> None:
         # 80/1000 share (8%) -- above the 1% deviation floor, below the
         # 10% mainline bar.
-        stats = _stats([
-            CandidateMove(uci="g1f3", white=500, draws=300, black=120),
-            CandidateMove(uci="b1c3", white=40, draws=30, black=10),
-        ])
+        stats = _stats(
+            [
+                CandidateMove(uci="g1f3", white=500, draws=300, black=120),
+                CandidateMove(uci="b1c3", white=40, draws=30, black=10),
+            ]
+        )
 
         result = classify("b1c3", stats, _settings())
 
@@ -53,10 +59,12 @@ class ClassifierTests(unittest.TestCase):
 
     def test_rare_move_is_a_deviation(self) -> None:
         # 1/1000 share (0.1%) -- clearly below the 1% floor.
-        stats = _stats([
-            CandidateMove(uci="g1f3", white=600, draws=300, black=99),
-            CandidateMove(uci="b1a3", white=1, draws=0, black=0),
-        ])
+        stats = _stats(
+            [
+                CandidateMove(uci="g1f3", white=600, draws=300, black=99),
+                CandidateMove(uci="b1a3", white=1, draws=0, black=0),
+            ]
+        )
 
         result = classify("b1a3", stats, _settings())
 
@@ -76,10 +84,12 @@ class ClassifierTests(unittest.TestCase):
         # Only 3 total recorded games -- far below min_sample_games. Must
         # not confidently call this a deviation just because the raw
         # percentage looks low.
-        stats = _stats([
-            CandidateMove(uci="g1f3", white=2, draws=0, black=0),
-            CandidateMove(uci="b1a3", white=1, draws=0, black=0),
-        ])
+        stats = _stats(
+            [
+                CandidateMove(uci="g1f3", white=2, draws=0, black=0),
+                CandidateMove(uci="b1a3", white=1, draws=0, black=0),
+            ]
+        )
 
         result = classify("b1a3", stats, _settings())
 
@@ -96,10 +106,12 @@ class ClassifierTests(unittest.TestCase):
     def test_configurable_thresholds_are_respected(self) -> None:
         # 8% share: SIDELINE under defaults, DEVIATION under a stricter
         # 10% deviation floor.
-        stats = _stats([
-            CandidateMove(uci="g1f3", white=600, draws=270, black=50),
-            CandidateMove(uci="b1c3", white=50, draws=20, black=10),
-        ])
+        stats = _stats(
+            [
+                CandidateMove(uci="g1f3", white=600, draws=270, black=50),
+                CandidateMove(uci="b1c3", white=50, draws=20, black=10),
+            ]
+        )
 
         default_result = classify("b1c3", stats, _settings())
         self.assertEqual(default_result.classification, "SIDELINE")

@@ -39,17 +39,11 @@ def king_safety(
 
     enemy = not color
     attackers = board.attackers(enemy, king_square)
-    legal_king_moves = sum(
-        1
-        for move in board.legal_moves
-        if move.from_square == king_square
-    )
+    legal_king_moves = sum(1 for move in board.legal_moves if move.from_square == king_square)
 
     return KingSafetyFeature(
         is_in_check=(
-            board.is_check()
-            if board.turn == color
-            else board.is_attacked_by(enemy, king_square)
+            board.is_check() if board.turn == color else board.is_attacked_by(enemy, king_square)
         ),
         king_square=chess.square_name(king_square),
         legal_king_moves=legal_king_moves,

@@ -1,16 +1,18 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import chess
 
 from ..models import BoardDelta, LineDirection, OpenedLine, StrategicFact
 
 
 class OpenedLineDetector:
-    def detect(self, delta: BoardDelta) -> list[StrategicFact]:
+    def detect(self, delta: BoardDelta) -> Sequence[StrategicFact]:
         before = delta.board_before
         after = delta.board_after
         color = delta.moving_color
-        facts: list[StrategicFact] = []
+        facts: list[OpenedLine] = []
 
         for square, piece in after.piece_map().items():
             if piece.color != color:
@@ -20,10 +22,7 @@ class OpenedLineDetector:
 
             after_attacks = set(after.attacks(square))
             before_piece = before.piece_at(square)
-            before_attacks = (
-                set(before.attacks(square)) if before_piece == piece
-                else set()
-            )
+            before_attacks = set(before.attacks(square)) if before_piece == piece else set()
 
             newly_controlled = after_attacks - before_attacks
             grouped: dict[LineDirection, list[chess.Square]] = {}
@@ -45,10 +44,13 @@ class OpenedLineDetector:
                     )
                 )
 
-        return sorted(
+        # Explicit intermediate annotation -- see added_defender.py's
+        # detect() for why.
+        sorted_facts: list[OpenedLine] = sorted(
             set(facts),
             key=lambda fact: (fact.piece_square, fact.direction.value),
         )
+        return sorted_facts
 
     def _direction(
         self,

@@ -9,8 +9,7 @@ from .node import (
     compute_pv_features,
     select_tactical_candidates,
     validate_annotated_moves,
-    strategic_explanations
-
+    strategic_explanations,
 )
 from .state import TacticsState
 

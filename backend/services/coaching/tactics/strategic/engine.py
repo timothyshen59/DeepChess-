@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from concurrent.futures import Executor
 from dataclasses import dataclass
 
@@ -17,10 +18,7 @@ class StrategicExplanationEngine:
     detectors: tuple[StrategicDetector, ...]
 
     def explain(self, delta: BoardDelta) -> StrategicExplanation:
-        detector_results = (
-            detector.detect(delta)
-            for detector in self.detectors
-        )
+        detector_results = (detector.detect(delta) for detector in self.detectors)
         return self._aggregate(detector_results)
 
     def explain_parallel(
@@ -28,21 +26,16 @@ class StrategicExplanationEngine:
         delta: BoardDelta,
         executor: Executor,
     ) -> StrategicExplanation:
-        futures = [
-            executor.submit(detector.detect, delta)
-            for detector in self.detectors
-        ]
+        futures = [executor.submit(detector.detect, delta) for detector in self.detectors]
         return self._aggregate(future.result() for future in futures)
 
     def _aggregate(
         self,
-        detector_results: object,
+        detector_results: Iterable[Sequence[StrategicFact]],
     ) -> StrategicExplanation:
         facts: set[StrategicFact] = set()
 
         for result in detector_results:
             facts.update(result)
 
-        return StrategicExplanation(
-            facts=tuple(sorted(facts, key=fact_sort_key))
-        )
+        return StrategicExplanation(facts=tuple(sorted(facts, key=fact_sort_key)))

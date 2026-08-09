@@ -8,7 +8,9 @@ from .tactical_rules import (
 )
 
 
-def _lesson_explanation(candidate: TacticalCandidate, features: CandidateFeatures) -> tuple[str, str]:
+def _lesson_explanation(
+    candidate: TacticalCandidate, features: CandidateFeatures
+) -> tuple[str, str]:
     defense = features.played_defense
     best = features.best_move
     pv = features.principal_variation
@@ -32,16 +34,14 @@ def _lesson_explanation(candidate: TacticalCandidate, features: CandidateFeature
             f"to an immediate capture. The tactical error is defensive: the "
             f"move did not preserve the piece's safety."
             + (f" {better} avoids that concession." if better else ""),
-            "Before moving, ask: what can my opponent capture immediately "
-            "after this move?",
+            "Before moving, ask: what can my opponent capture immediately after this move?",
         )
 
     if best and best.gives_checkmate:
         return (
             f"{played} missed a mating move: {better}. The winning idea was "
             "to prioritize forcing checks.",
-            "Use checks-captures-threats order whenever the enemy king has "
-            "limited escape squares.",
+            "Use checks-captures-threats order whenever the enemy king has limited escape squares.",
         )
 
     if best and best.is_check:
@@ -56,14 +56,12 @@ def _lesson_explanation(candidate: TacticalCandidate, features: CandidateFeature
         return (
             f"{played} missed the tactical capture {better}. The best line "
             "wins material or removes a key defender.",
-            "Before playing a quiet move, compare all forcing captures for "
-            "both sides.",
+            "Before playing a quiet move, compare all forcing captures for both sides.",
         )
 
     if defense and defense.opponent_has_forcing_check:
         return (
-            f"{played} weakened king safety and gave the opponent a forcing "
-            "checking continuation.",
+            f"{played} weakened king safety and gave the opponent a forcing checking continuation.",
             "After choosing a move, explicitly test every legal opponent "
             "check before finalizing it.",
         )
@@ -76,8 +74,7 @@ def _lesson_explanation(candidate: TacticalCandidate, features: CandidateFeature
         f"{played} was a tactical calculation error."
         + (f" {better} was the stronger continuation." if better else "")
         + material_detail,
-        "Use a final blunder check: opponent checks, captures, threats, "
-        "then your forcing replies.",
+        "Use a final blunder check: opponent checks, captures, threats, then your forcing replies.",
     )
 
 

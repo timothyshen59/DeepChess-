@@ -1,19 +1,27 @@
 """
-Unit tests for the opening agent's graph, using fakes for the ECO index and
-the deviation engine (see `graph.py`: `build_opening_graph(deps)` takes
-both as parameters precisely so tests don't need a real dataset file, a
-live Lichess Explorer call, or a running Stockfish pool for the parts that
-don't need one).
+Unit tests for the opening agent's graph, using fakes for the ECO index,
+the deviation engine, and Stockfish (see `graph.py`: `build_opening_graph(deps)`
+takes the first two as parameters precisely so tests don't need a real
+dataset file or a live Lichess Explorer call).
 
-`evaluate_mistakes` does call the real `services.stockfish.aannotate_moves`,
-so these tests start/stop a real Stockfish pool -- mirroring
-tactics/tests/test.py's use of the compiled graph directly, just async.
+Stockfish access is *not* dependency-injected the way the other two are --
+`node.py` imports `aannotate_moves` directly from `services.stockfish` and
+`evaluate_mistakes` calls it by that name, so there's no `OpeningDeps` field
+to substitute. Instead, patch the name where `node.py` looks it up
+(`services.coaching.opening.node.aannotate_moves`, not
+`services.stockfish.aannotate_moves` -- patching the latter wouldn't affect
+node.py's already-bound import) with a deterministic fake shaped exactly
+like the real `_finalize_annotations` output. This also fixes a
+determinism gap, not just a dependency one: real Stockfish output varies
+run to run (documented extensively in this session's e2e fixtures), so a
+fake response is strictly more reliable here, not just faster/dependency-free.
 """
 
 from __future__ import annotations
 
 import unittest
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
 from services.coaching.opening.eco.eco_index import EcoEntry, EcoIndex
 from services.coaching.opening.graph import OpeningDeps, build_opening_graph
@@ -21,34 +29,71 @@ from services.coaching.opening.tests.fixtures.najdorf_fake_service import (
     FakeDeviationService,
     build_najdorf_fake_service,
 )
-from services.stockfish import start_stockfish_pool, stop_stockfish_pool
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 FIXTURE_PGN_PATH = FIXTURES_DIR / "najdorf_deviation.pgn"
 
 NAJDORF_MOVES_UCI = [
-    "e2e4", "c7c5", "g1f3", "d7d6", "d2d4", "c5d4", "f3d4", "g8f6", "b1c3", "a7a6",
+    "e2e4",
+    "c7c5",
+    "g1f3",
+    "d7d6",
+    "d2d4",
+    "c5d4",
+    "f3d4",
+    "g8f6",
+    "b1c3",
+    "a7a6",
 ]
 
 
 def _fake_eco_index() -> EcoIndex:
     """A tiny in-memory index -- no dataset file touched."""
     prefix = " ".join(NAJDORF_MOVES_UCI)
-    return EcoIndex({prefix: EcoEntry(eco="B90", name="Sicilian Defense", variation="Najdorf Variation")})
+    return EcoIndex(
+        {prefix: EcoEntry(eco="B90", name="Sicilian Defense", variation="Najdorf Variation")}
+    )
 
 
 def _empty_eco_index() -> EcoIndex:
     return EcoIndex({})
 
 
-class OpeningGraphTests(unittest.IsolatedAsyncioTestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        start_stockfish_pool()
+async def _fake_aannotate_moves(moves: list[dict]) -> dict:
+    """Deterministic stand-in for `services.stockfish.aannotate_moves`,
+    shaped exactly like the real `_finalize_annotations` output. Flags
+    the first ply as a "mistake" (cp_loss=50) and every other ply as
+    "good" -- enough for `evaluate_mistakes` to produce one real,
+    well-formed critical mistake, deterministically, without a Stockfish
+    subprocess or the run-to-run search variance a real engine has."""
+    annotated = [
+        {
+            "quality": "mistake" if i == 0 else "good",
+            "cp_loss": 50 if i == 0 else 0,
+            "best_move_uci": "e2e4",
+        }
+        for i in range(len(moves))
+    ]
+    return {
+        "moves": annotated,
+        "failed_positions": 0,
+        "total_positions": len(moves),
+        "is_partial": False,
+    }
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        stop_stockfish_pool()
+
+class OpeningGraphTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self) -> None:
+        # Patched where node.py looks it up (`from services.stockfish
+        # import aannotate_moves` binds the name into node.py's own
+        # namespace) -- patching services.stockfish.aannotate_moves
+        # directly wouldn't affect that already-bound reference.
+        patcher = patch(
+            "services.coaching.opening.node.aannotate_moves",
+            new=AsyncMock(side_effect=_fake_aannotate_moves),
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     async def test_identifies_opening_and_flags_deviation_with_real_book(self) -> None:
         pgn = FIXTURE_PGN_PATH.read_text()

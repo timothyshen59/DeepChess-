@@ -26,13 +26,32 @@ dev-dependencies = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",  # for testing the opening agent's async graph/route
     "ruff>=0.4.0",
+    "mypy>=1.13.0",
 ]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 
+[tool.mypy]
+python_version = "3.12"
+warn_unused_ignores = true
+warn_redundant_casts = true
+check_untyped_defs = true
+exclude = ["(^|/)tests/"]
+
+[[tool.mypy.overrides]]
+# onnxruntime is the one production dependency without a py.typed marker or
+# published stubs (verified directly, not assumed -- every other dependency
+# here -- chess, fastapi, pydantic, httpx, numpy, uvicorn, langgraph,
+# anthropic -- ships its own py.typed). Scoped to just this module rather
+# than a blanket ignore_missing_imports.
+module = ["onnxruntime.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
+addopts = ["-m", "not e2e and not integration"]
 markers = [
-    "e2e: full end-to-end tests using a real Stockfish engine and real graphs; requires a local `stockfish` binary. Run with `pytest -m e2e`; excluded by default via `pytest -m \"not e2e\"`.",
+    "e2e: full end-to-end tests using a real Stockfish engine and real graphs; requires a local `stockfish` binary. Run with `pytest -m e2e`; excluded by default via `addopts` below (pass `-m e2e` explicitly to run them).",
+    "integration: exercises real infrastructure (a real Stockfish binary) but no external network services; requires a local `stockfish` binary. Run with `pytest -m integration`; excluded by default via `addopts` below.",
 ]

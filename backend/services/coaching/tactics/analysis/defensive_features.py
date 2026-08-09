@@ -22,8 +22,7 @@ def _hanging_piece(
         return None
 
     can_be_captured = any(
-        move.to_square == square and board.is_capture(move)
-        for move in board.legal_moves
+        move.to_square == square and board.is_capture(move) for move in board.legal_moves
     )
 
     return HangingPieceFeature(
@@ -113,8 +112,7 @@ def defensive_feature(
 
     return DefensiveFeature(
         opponent_has_forcing_check=any(
-            board_after.gives_check(reply)
-            for reply in board_after.legal_moves
+            board_after.gives_check(reply) for reply in board_after.legal_moves
         ),
         opponent_has_mate_in_one=has_mate_in_one(board_after),
         immediate_capture_targets=capture_targets,

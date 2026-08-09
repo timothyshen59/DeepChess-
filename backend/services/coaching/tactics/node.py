@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import chess 
+import chess
 
 from .analysis.board_state import safe_board
 from .analysis.defensive_features import defensive_feature
@@ -9,7 +9,7 @@ from .analysis.pv_inspection import inspect_pv
 from .pipeline.candidate_selection import select_candidates
 from .report.lesson_builder import build_lesson
 from .report.report_builder import build_report
-from .schemas import CandidateFeatures, TacticalCandidate
+from .schemas import CandidateFeatures, TacticalCandidate, TacticalLesson
 from .state import TacticsState
 from .pipeline.validation import validate_moves
 
@@ -32,8 +32,7 @@ def _build_best_move_delta(
 
     if best_move not in board_before.legal_moves:
         raise ValueError(
-            f"Candidate ply={candidate.ply} has illegal best move "
-            f"{candidate.best_move_uci}"
+            f"Candidate ply={candidate.ply} has illegal best move {candidate.best_move_uci}"
         )
 
     board_after = board_before.copy(stack=False)
@@ -48,9 +47,7 @@ def _build_best_move_delta(
 
 def validate_annotated_moves(state: TacticsState) -> dict:
     """Validate raw annotations before tactical feature extraction."""
-    valid_moves, issues = validate_moves(
-        state.get("annotated_moves", [])
-    )
+    valid_moves, issues = validate_moves(state.get("annotated_moves", []))
 
     return {
         "valid_moves": valid_moves,
@@ -60,9 +57,7 @@ def validate_annotated_moves(state: TacticsState) -> dict:
 
 def select_tactical_candidates(state: TacticsState) -> dict:
     """Select tactical candidates from validated move annotations."""
-    candidates = select_candidates(
-        state.get("valid_moves", [])
-    )
+    candidates = select_candidates(state.get("valid_moves", []))
 
     return {
         "candidates": candidates,
@@ -134,8 +129,6 @@ def compute_pv_features(state: TacticsState) -> dict:
     return {"feature_updates": updates}
 
 
-
-
 def assemble_tactics_report(state: TacticsState) -> dict:
     """Build at most four ranked tactical lessons from merged features."""
     features_by_ply = state.get("feature_updates", {})
@@ -146,7 +139,7 @@ def assemble_tactics_report(state: TacticsState) -> dict:
         reverse=True,
     )
 
-    lessons = []
+    lessons: list[TacticalLesson] = []
 
     for candidate in ranked_candidates:
         if len(lessons) == 4:
@@ -170,7 +163,7 @@ def assemble_tactics_report(state: TacticsState) -> dict:
             input_issues=state.get("input_issues", []),
         )
     }
-    
+
 
 def strategic_explanations(
     state: TacticsState,
@@ -185,9 +178,7 @@ def strategic_explanations(
         for candidate in state.get("candidates", [])
     }
 
-    engine = StrategicExplanationEngine(
-        detectors=default_strategic_detectors()
-    )
+    engine = StrategicExplanationEngine(detectors=default_strategic_detectors())
 
     facts_by_ply: dict[int, tuple[StrategicFact, ...]] = {}
 

@@ -14,8 +14,9 @@ from .schemas import (
 from .strategic.models import StrategicFact
 
 
-
-def merge_feature_updates(current: dict[int, CandidateFeatures], incoming: dict[int, CandidateFeatures]) -> dict[int, CandidateFeatures]:
+def merge_feature_updates(
+    current: dict[int, CandidateFeatures], incoming: dict[int, CandidateFeatures]
+) -> dict[int, CandidateFeatures]:
     """Deep-merge independent parallel feature branch outputs by ply."""
     merged = dict(current)
 
@@ -49,10 +50,8 @@ class TacticsState(TypedDict, total=False):
         dict[int, CandidateFeatures],
         merge_feature_updates,
     ]
-    
-    
+
     strategic_facts_by_ply: dict[int, tuple[StrategicFact, ...]]
     lessons: list[TacticalLesson]
-
 
     report: TacticsReport

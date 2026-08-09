@@ -21,7 +21,21 @@ from services.opening_deviation.models.opening import (
     canonical_fen_key,
 )
 
-MAINLINE_SAN = ["e4", "c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "a6", "Be2", "e5", "Nb3"]
+MAINLINE_SAN = [
+    "e4",
+    "c5",
+    "Nf3",
+    "d6",
+    "d4",
+    "cxd4",
+    "Nxd4",
+    "Nf6",
+    "Nc3",
+    "a6",
+    "Be2",
+    "e5",
+    "Nb3",
+]
 BETTER_CONTINUATION_SAN = ["O-O", "O-O", "Be3", "Nc6"]
 
 
@@ -90,7 +104,9 @@ def build_najdorf_fake_service() -> FakeDeviationService:
     for san in BETTER_CONTINUATION_SAN:
         fen_before = canonical_fen_key(board.fen())
         move = board.parse_san(san)
-        best_candidates[fen_before] = CandidateMove(uci=move.uci(), san=san, white=600, draws=300, black=100)
+        best_candidates[fen_before] = CandidateMove(
+            uci=move.uci(), san=san, white=600, draws=300, black=100
+        )
         board.push(move)
 
     return FakeDeviationService(classify_responses, best_candidates)

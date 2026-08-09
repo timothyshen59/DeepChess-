@@ -4,6 +4,7 @@ import chess
 
 from ..models import BoardDelta, ImprovedKingSafety, StrategicFact
 
+
 class KingSafetyDetector:
     def detect(self, delta: BoardDelta) -> list[StrategicFact]:
         before = delta.board_before
@@ -26,8 +27,7 @@ class KingSafetyDetector:
         newly_defended = tuple(
             square
             for square in sorted(after_zone)
-            if after.attackers(color, square)
-            and not before.attackers(color, square)
+            if after.attackers(color, square) and not before.attackers(color, square)
         )
 
         if attacks_after >= attacks_before and not newly_defended:
