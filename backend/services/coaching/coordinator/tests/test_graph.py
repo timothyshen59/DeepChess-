@@ -41,7 +41,9 @@ def _tactics_report(lessons: list[TacticalLesson]) -> TacticsReport:
     )
 
 
-def _opening_mistake(ply: int, move_number: int, color: str, played_san: str, cp_loss: int) -> OpeningCriticalMistake:
+def _opening_mistake(
+    ply: int, move_number: int, color: str, played_san: str, cp_loss: int
+) -> OpeningCriticalMistake:
     return OpeningCriticalMistake(
         ply=ply,
         move_number=move_number,
@@ -54,7 +56,9 @@ def _opening_mistake(ply: int, move_number: int, color: str, played_san: str, cp
     )
 
 
-def _tactical_lesson(ply: int, move_number: int, color: str, played_move: str, cp_loss: int) -> TacticalLesson:
+def _tactical_lesson(
+    ply: int, move_number: int, color: str, played_move: str, cp_loss: int
+) -> TacticalLesson:
     return TacticalLesson(
         ply=ply,
         move_number=move_number,
@@ -77,10 +81,12 @@ class CoordinatorGraphTests(unittest.TestCase):
         opening_report = _opening_report([_opening_mistake(14, 7, "black", "h6", 27)])
         tactics_report = _tactics_report([_tactical_lesson(14, 7, "black", "h6", 27)])
 
-        result = self.graph.invoke({
-            "opening_report": opening_report,
-            "tactics_report": tactics_report,
-        })
+        result = self.graph.invoke(
+            {
+                "opening_report": opening_report,
+                "tactics_report": tactics_report,
+            }
+        )
         report = result["report"]
 
         self.assertEqual(len(report.lessons), 1)
@@ -95,10 +101,12 @@ class CoordinatorGraphTests(unittest.TestCase):
         opening_report = _opening_report([_opening_mistake(11, 6, "white", "Be2", 40)])
         tactics_report = _tactics_report([_tactical_lesson(19, 10, "white", "f4", 26)])
 
-        result = self.graph.invoke({
-            "opening_report": opening_report,
-            "tactics_report": tactics_report,
-        })
+        result = self.graph.invoke(
+            {
+                "opening_report": opening_report,
+                "tactics_report": tactics_report,
+            }
+        )
         report = result["report"]
 
         self.assertEqual(len(report.lessons), 2)
@@ -110,10 +118,12 @@ class CoordinatorGraphTests(unittest.TestCase):
     def test_missing_tactics_report_still_produces_a_report(self) -> None:
         opening_report = _opening_report([_opening_mistake(14, 7, "black", "h6", 27)])
 
-        result = self.graph.invoke({
-            "opening_report": opening_report,
-            "tactics_report": None,
-        })
+        result = self.graph.invoke(
+            {
+                "opening_report": opening_report,
+                "tactics_report": None,
+            }
+        )
         report = result["report"]
 
         self.assertEqual(len(report.lessons), 1)
@@ -134,10 +144,12 @@ class CoordinatorGraphTests(unittest.TestCase):
         opening_report = _opening_report([_opening_mistake(14, 7, "black", "h6", 27)])
         tactics_report = _tactics_report([_tactical_lesson(14, 7, "black", "Nbd7", 27)])
 
-        result = self.graph.invoke({
-            "opening_report": opening_report,
-            "tactics_report": tactics_report,
-        })
+        result = self.graph.invoke(
+            {
+                "opening_report": opening_report,
+                "tactics_report": tactics_report,
+            }
+        )
         report = result["report"]
 
         self.assertEqual(len(report.lessons), 1)
@@ -155,8 +167,12 @@ class RankingUnitTests(unittest.TestCase):
     def test_truncates_to_ten_highest_cp_loss(self) -> None:
         lessons = [
             CombinedLesson(
-                ply=i, move_number=i, player_color="white",
-                played_move="e4", cp_loss=i, source="opening",
+                ply=i,
+                move_number=i,
+                player_color="white",
+                played_move="e4",
+                cp_loss=i,
+                source="opening",
             )
             for i in range(1, 13)  # 12 entries, cp_loss 1..12
         ]

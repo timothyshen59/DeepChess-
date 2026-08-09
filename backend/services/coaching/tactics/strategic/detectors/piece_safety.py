@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import chess
@@ -14,14 +15,14 @@ class SafetyCounts:
 
 
 class PieceSafetyDetector:
-    def detect(self, delta: BoardDelta) -> list[StrategicFact]:
+    def detect(self, delta: BoardDelta) -> Sequence[StrategicFact]:
         before = delta.board_before
         after = delta.board_after
 
         color = delta.moving_color
         opponent = not color
 
-        facts: list[StrategicFact] = []
+        facts: list[PieceSafety] = []
 
         for square, piece in self._candidate_pieces(after, color):
             previous_square = self._previous_square(
@@ -63,7 +64,10 @@ class PieceSafetyDetector:
                 )
             )
 
-        return sorted(facts, key=lambda fact: fact.piece_square)
+        # Explicit intermediate annotation -- see added_defender.py's
+        # detect() for why.
+        sorted_facts: list[PieceSafety] = sorted(facts, key=lambda fact: fact.piece_square)
+        return sorted_facts
 
     @staticmethod
     def _candidate_pieces(
@@ -98,10 +102,7 @@ class PieceSafetyDetector:
         before: SafetyCounts,
         after: SafetyCounts,
     ) -> bool:
-        return (
-            after.attackers < before.attackers
-            or after.defenders > before.defenders
-        )
+        return after.attackers < before.attackers or after.defenders > before.defenders
 
     @staticmethod
     def _previous_square(
@@ -115,10 +116,7 @@ class PieceSafetyDetector:
         if current_square == move.to_square:
             moved_piece = before.piece_at(move.from_square)
 
-            if (
-                moved_piece is not None
-                and moved_piece.piece_type == piece.piece_type
-            ):
+            if moved_piece is not None and moved_piece.piece_type == piece.piece_type:
                 return move.from_square
 
         if before.piece_at(current_square) == piece:

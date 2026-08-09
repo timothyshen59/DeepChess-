@@ -67,18 +67,11 @@ def strategic_fact_to_json(
         value = getattr(fact, field.name)
 
         if field.name == "moving_color":
-            output[field.name] = (
-                "white"
-                if value == chess.WHITE
-                else "black"
-            )
+            output[field.name] = "white" if value == chess.WHITE else "black"
             continue
 
         if field.name.endswith("_squares"):
-            output[field.name] = [
-                chess.square_name(square)
-                for square in value
-            ]
+            output[field.name] = [chess.square_name(square) for square in value]
             continue
 
         if "_square" in field.name:
@@ -129,10 +122,7 @@ def analyse_game(
             best_move = best_pv[0] if best_pv else None
 
             if played_move not in board.legal_moves:
-                raise ValueError(
-                    f"PGN contains illegal move at ply {ply}: "
-                    f"{played_move.uci()}"
-                )
+                raise ValueError(f"PGN contains illegal move at ply {ply}: {played_move.uci()}")
 
             board_after_played = board.copy(stack=False)
             board_after_played.push(played_move)
@@ -149,11 +139,7 @@ def analyse_game(
                 cp_loss = max(0, played_score_cp - best_score_cp)
 
             mate_score = best_info["score"].relative.mate()
-            mate_in_plies = (
-                abs(mate_score)
-                if mate_score is not None
-                else None
-            )
+            mate_in_plies = abs(mate_score) if mate_score is not None else None
 
             annotations.append(
                 AnnotatedMove(
@@ -165,20 +151,9 @@ def analyse_game(
                     fen_before=fen_before,
                     played_san=played_san,
                     played_uci=played_move.uci(),
-                    best_move_san=(
-                        board.san(best_move)
-                        if best_move is not None
-                        else None
-                    ),
-                    best_move_uci=(
-                        best_move.uci()
-                        if best_move is not None
-                        else None
-                    ),
-                    principal_variation_uci=[
-                        move.uci()
-                        for move in best_pv
-                    ],
+                    best_move_san=(board.san(best_move) if best_move is not None else None),
+                    best_move_uci=(best_move.uci() if best_move is not None else None),
+                    principal_variation_uci=[move.uci() for move in best_pv],
                     principal_variation_san=san_line_from_pv(
                         board,
                         best_pv,
@@ -220,10 +195,7 @@ def main() -> None:
         {},
     )
 
-    candidates_by_ply = {
-        candidate.ply: candidate
-        for candidate in result.get("candidates", [])
-    }
+    candidates_by_ply = {candidate.ply: candidate for candidate in result.get("candidates", [])}
 
     print("\n=== GAME METADATA ===")
     print(f"Annotated plies: {len(annotations)}")
@@ -257,10 +229,7 @@ def main() -> None:
         candidate = candidates_by_ply.get(ply)
 
         if candidate is not None:
-            print(
-                f"\n--- Ply {ply}: "
-                f"{candidate.played_san} → {candidate.best_move_san} ---"
-            )
+            print(f"\n--- Ply {ply}: {candidate.played_san} → {candidate.best_move_san} ---")
         else:
             print(f"\n--- Ply {ply} ---")
 
@@ -276,18 +245,11 @@ def main() -> None:
         print("\n=== INPUT ISSUES ===")
 
         for issue in report.input_issues:
-            print(
-                f"[{issue.severity}] "
-                f"ply={issue.ply}: "
-                f"{issue.code} — {issue.message}"
-            )
+            print(f"[{issue.severity}] ply={issue.ply}: {issue.code} — {issue.message}")
 
     Path("annotated_moves.json").write_text(
         json.dumps(
-            [
-                annotation.model_dump(mode="json")
-                for annotation in annotations
-            ],
+            [annotation.model_dump(mode="json") for annotation in annotations],
             indent=2,
         )
     )
@@ -300,10 +262,7 @@ def main() -> None:
     )
 
     strategic_explanations_json = {
-        str(ply): [
-            strategic_fact_to_json(fact)
-            for fact in facts
-        ]
+        str(ply): [strategic_fact_to_json(fact) for fact in facts]
         for ply, facts in sorted(strategic_facts_by_ply.items())
         if facts
     }

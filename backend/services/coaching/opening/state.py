@@ -33,7 +33,7 @@ class BranchResults(TypedDict, total=False):
 
 def merge_branch_results(current: BranchResults, incoming: BranchResults) -> BranchResults:
     """Union independent parallel-branch outputs by key."""
-    merged: BranchResults = dict(current)
+    merged: BranchResults = {**current}
     merged.update(incoming)
     return merged
 

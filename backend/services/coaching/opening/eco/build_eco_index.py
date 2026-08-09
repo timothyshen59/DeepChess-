@@ -33,7 +33,9 @@ import chess.pgn
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 logger = logging.getLogger(__name__)
 
-SOURCE_URL_TEMPLATE = "https://raw.githubusercontent.com/lichess-org/chess-openings/master/{volume}.tsv"
+SOURCE_URL_TEMPLATE = (
+    "https://raw.githubusercontent.com/lichess-org/chess-openings/master/{volume}.tsv"
+)
 VOLUMES = ("a", "b", "c", "d", "e")
 
 OUTPUT_PATH = Path(__file__).parent / "data" / "eco_index.json"
@@ -50,7 +52,7 @@ def _fetch_tsv_rows(volume: str) -> list[dict[str, str]]:
 
 
 def _split_name_and_variation(raw_name: str) -> tuple[str, str | None]:
-    """"Sicilian Defense: Najdorf Variation, English Attack" ->
+    """ "Sicilian Defense: Najdorf Variation, English Attack" ->
     ("Sicilian Defense", "Najdorf Variation, English Attack")."""
     if ":" not in raw_name:
         return raw_name.strip(), None

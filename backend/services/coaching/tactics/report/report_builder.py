@@ -10,14 +10,8 @@ def build_report(
     """Build a game-level report from already-ranked tactical lessons."""
     selected_lessons = lessons[:4]
 
-    defensive_count = sum(
-        lesson.category in {"defensive", "mixed"}
-        for lesson in selected_lessons
-    )
-    offensive_count = sum(
-        lesson.category in {"offensive", "mixed"}
-        for lesson in selected_lessons
-    )
+    defensive_count = sum(lesson.category in {"defensive", "mixed"} for lesson in selected_lessons)
+    offensive_count = sum(lesson.category in {"offensive", "mixed"} for lesson in selected_lessons)
 
     if not selected_lessons:
         headline = "No verified tactical blunders found"

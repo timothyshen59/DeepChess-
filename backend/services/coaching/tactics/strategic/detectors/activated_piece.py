@@ -1,17 +1,19 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import chess
 
 from ..models import ActivatedPiece, BoardDelta, StrategicFact
 
 
 class ActivatedPieceDetector:
-    def detect(self, delta: BoardDelta) -> list[StrategicFact]:
+    def detect(self, delta: BoardDelta) -> Sequence[StrategicFact]:
         before = delta.board_before
         after = delta.board_after
         move = delta.best_move
         color = delta.moving_color
-        facts: list[StrategicFact] = []
+        facts: list[ActivatedPiece] = []
 
         for after_square, piece_after in after.piece_map().items():
             if piece_after.color != color:
@@ -51,7 +53,12 @@ class ActivatedPieceDetector:
                 )
             )
 
-        return sorted(set(facts), key=lambda fact: fact.piece_square)
+        # Explicit intermediate annotation -- see added_defender.py's
+        # detect() for why (mypy's bidirectional inference otherwise solves
+        # sorted()'s type parameter against the wider Sequence[StrategicFact]
+        # return context instead of `facts`'s actual element type).
+        sorted_facts: list[ActivatedPiece] = sorted(set(facts), key=lambda fact: fact.piece_square)
+        return sorted_facts
 
     def _before_square(
         self,

@@ -4,7 +4,9 @@ from ..analysis.board_state import safe_board, safe_uci_move
 from ..schemas import AnnotatedMove, InputIssue
 
 
-def validate_moves(annotated_moves: list[AnnotatedMove]) -> tuple[list[AnnotatedMove], list[InputIssue]]:
+def validate_moves(
+    annotated_moves: list[AnnotatedMove],
+) -> tuple[list[AnnotatedMove], list[InputIssue]]:
     """Validate annotations while retaining valid moves from the same game."""
     valid_moves: list[AnnotatedMove] = []
     issues: list[InputIssue] = []
@@ -18,8 +20,7 @@ def validate_moves(annotated_moves: list[AnnotatedMove]) -> tuple[list[Annotated
                     ply=annotated_move.ply,
                     code="invalid_fen",
                     message=(
-                        "fen_before is invalid; the move was excluded "
-                        "from tactical analysis."
+                        "fen_before is invalid; the move was excluded from tactical analysis."
                     ),
                 )
             )
@@ -30,10 +31,7 @@ def validate_moves(annotated_moves: list[AnnotatedMove]) -> tuple[list[Annotated
                 InputIssue(
                     ply=annotated_move.ply,
                     code="color_turn_mismatch",
-                    message=(
-                        "Annotated color does not match the side to move "
-                        "in fen_before."
-                    ),
+                    message=("Annotated color does not match the side to move in fen_before."),
                     severity="warning",
                 )
             )

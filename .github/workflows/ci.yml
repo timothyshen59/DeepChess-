@@ -1,0 +1,136 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+env:
+  # Every job that runs Stockfish needs this -- services/stockfish.py's
+  # hardcoded fallback (/opt/homebrew/bin/stockfish) is macOS-only and
+  # doesn't exist on the Ubuntu runner. apt installs it at /usr/games/stockfish
+  # (the standard Debian/Ubuntu games-category path).
+  STOCKFISH_PATH: /usr/games/stockfish
+
+jobs:
+  lint:
+    name: Lint / format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+  typecheck:
+    name: mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Cache mypy
+        uses: actions/cache@v4
+        with:
+          path: backend/.mypy_cache
+          key: mypy-${{ runner.os }}-${{ hashFiles('backend/uv.lock', 'backend/pyproject.toml') }}
+          restore-keys: |
+            mypy-${{ runner.os }}-
+
+      - name: mypy (production code only -- tests/ is out of scope by config)
+        run: uv run mypy services routes main.py config.py
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run unit tests
+        # addopts already excludes both e2e and integration -- this is
+        # deliberately the same bare invocation a developer would run.
+        run: uv run pytest -v
+
+  integration-tests:
+    name: Integration tests (real Stockfish)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Install Stockfish
+        run: sudo apt-get update && sudo apt-get install -y stockfish
+
+      - name: Run integration tests
+        env:
+          # Lighter than services/stockfish.py's defaults (4 workers) --
+          # a standard 2-core GitHub-hosted runner mildly oversubscribes at
+          # the default, and these tests don't need deep search.
+          MAX_WORKERS: "2"
+          STOCKFISH_NODES: "50000"
+        run: uv run pytest -m integration -v
+
+  e2e-tests:
+    name: E2E tests (main only)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Install Stockfish
+        run: sudo apt-get update && sudo apt-get install -y stockfish
+
+      - name: Run e2e tests
+        env:
+          LICHESS_API_TOKEN: ${{ secrets.LICHESS_API_TOKEN }}
+          OPENING_DEVIATION_E2E_LIVE: "1"
+        run: uv run pytest -m e2e -v

@@ -62,7 +62,9 @@ def _stats(fen: str, mainline_uci: str = "e2e4") -> ExplorerStats:
 
 
 def _settings() -> OpeningDeviationSettings:
-    return OpeningDeviationSettings(deviation_share_threshold=0.01, mainline_share_threshold=0.10, min_sample_games=50)
+    return OpeningDeviationSettings(
+        deviation_share_threshold=0.01, mainline_share_threshold=0.10, min_sample_games=50
+    )
 
 
 class OpeningDeviationServiceTests(unittest.IsolatedAsyncioTestCase):
@@ -121,10 +123,12 @@ class OpeningDeviationServiceTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_find_first_deviation_stops_at_first_deviation(self) -> None:
         repository = FakeRepository()
-        explorer_client = FakeExplorerClient({
-            FEN_START: _stats(FEN_START),
-            FEN_AFTER_E4: _stats(FEN_AFTER_E4),
-        })
+        explorer_client = FakeExplorerClient(
+            {
+                FEN_START: _stats(FEN_START),
+                FEN_AFTER_E4: _stats(FEN_AFTER_E4),
+            }
+        )
         service = OpeningDeviationService(repository, explorer_client, _settings())
 
         records = [
@@ -142,10 +146,12 @@ class OpeningDeviationServiceTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_find_first_deviation_returns_not_found_when_all_mainline(self) -> None:
         repository = FakeRepository()
-        explorer_client = FakeExplorerClient({
-            FEN_START: _stats(FEN_START),
-            FEN_AFTER_E4: _stats(FEN_AFTER_E4),
-        })
+        explorer_client = FakeExplorerClient(
+            {
+                FEN_START: _stats(FEN_START),
+                FEN_AFTER_E4: _stats(FEN_AFTER_E4),
+            }
+        )
         service = OpeningDeviationService(repository, explorer_client, _settings())
 
         records = [

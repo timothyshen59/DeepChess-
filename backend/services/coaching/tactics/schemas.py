@@ -7,7 +7,12 @@ from pydantic import BaseModel, Field
 
 ColorName = Literal["white", "black"]
 Confidence = Literal["high", "medium", "low"]
-MoveQuality = Literal["good", "inaccuracy", "mistake", "blunder", "unknown"]
+MoveQuality = Literal["brilliant", "good", "inaccuracy", "mistake", "blunder", "unknown"]
+"""Matches services/stockfish.py::QUALITY_THRESHOLDS' full value set exactly
+(6 values, including "brilliant" for cp_loss < 0) -- AnnotatedMove.quality
+carries whatever a real move actually got labeled, before candidate
+selection filters down to the "mistake"/"blunder" subset TacticalCandidate
+ever actually receives in practice."""
 TacticalCategory = Literal["offensive", "defensive", "mixed"]
 
 TacticalMotif = Literal[
@@ -43,7 +48,7 @@ class AnnotatedMove(BaseModel):
     color: ColorName
 
     cp_loss: int = Field(default=0, ge=0)
-    quality: str
+    quality: MoveQuality
 
     fen_before: str = Field(min_length=1)
     played_san: str = Field(default="?")

@@ -59,8 +59,13 @@ class WarmupBuilder:
 
             self._repository.put(key, stats)
 
-            if not target_reached and len(self._repository) >= self._settings.warmup_target_position_count:
-                logger.info("Warmup target position count reached; no further branches will be enqueued.")
+            if (
+                not target_reached
+                and len(self._repository) >= self._settings.warmup_target_position_count
+            ):
+                logger.info(
+                    "Warmup target position count reached; no further branches will be enqueued."
+                )
                 target_reached = True
 
             if target_reached or ply >= self._settings.warmup_max_ply or stats.total_games <= 0:

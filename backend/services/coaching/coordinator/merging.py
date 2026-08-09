@@ -11,9 +11,9 @@ from __future__ import annotations
 from services.coaching.opening.schemas import CriticalMistake as OpeningCriticalMistake
 from services.coaching.tactics.schemas import TacticalLesson
 
-from .schemas import CombinedLesson, InputIssue
+from .schemas import CombinedLesson, ColorName, InputIssue, LessonSource
 
-LessonKey = tuple[int, int, str]
+LessonKey = tuple[int, int, ColorName]
 
 
 def _opening_key(mistake: OpeningCriticalMistake) -> LessonKey:
@@ -49,6 +49,8 @@ def merge_lessons(
         opening_mistake = opening_by_key.get(key)
         tactical_lesson = tactics_by_key.get(key)
 
+        source: LessonSource
+
         if opening_mistake is not None and tactical_lesson is not None:
             source = "both"
             cp_loss = opening_mistake.cp_loss
@@ -73,6 +75,10 @@ def merge_lessons(
             cp_loss = opening_mistake.cp_loss
             played_move = opening_mistake.played_san
         else:
+            # all_keys only ever contains keys present in at least one of
+            # the two source dicts -- reaching here means opening_mistake
+            # was None, so tactical_lesson must be the one that's real.
+            assert tactical_lesson is not None
             source = "tactics"
             cp_loss = tactical_lesson.cp_loss
             played_move = tactical_lesson.played_move

@@ -51,18 +51,22 @@ async def run_coaching_pipeline(pgn_text: str, opening_deps: OpeningDeps) -> Pip
     tactics_report = run_tactics(pgn_text)
 
     opening_graph = build_opening_graph(opening_deps)
-    opening_result = await opening_graph.ainvoke({
-        "pgn": pgn_text,
-        "fen": None,
-        "user_color": None,
-    })
+    opening_result = await opening_graph.ainvoke(
+        {
+            "pgn": pgn_text,
+            "fen": None,
+            "user_color": None,
+        }
+    )
     opening_report = opening_result["report"]
 
     coordinator_graph = build_coordinator_graph()
-    coordinator_result = coordinator_graph.invoke({
-        "opening_report": opening_report,
-        "tactics_report": tactics_report,
-    })
+    coordinator_result = coordinator_graph.invoke(
+        {
+            "opening_report": opening_report,
+            "tactics_report": tactics_report,
+        }
+    )
 
     return PipelineResult(
         coordinated=coordinator_result["report"],

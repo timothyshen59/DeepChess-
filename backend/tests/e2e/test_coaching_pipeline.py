@@ -184,7 +184,13 @@ def assert_tactics_agent_expectations(expected: dict, report: TacticsReport) -> 
                 None,
             )
             actual_lessons = [
-                (lesson.move_number, lesson.player_color, lesson.category, lesson.motif, lesson.cp_loss)
+                (
+                    lesson.move_number,
+                    lesson.player_color,
+                    lesson.category,
+                    lesson.motif,
+                    lesson.cp_loss,
+                )
                 for lesson in report.crucial_mistakes
             ]
             assert match is not None, (
@@ -219,7 +225,9 @@ def assert_coordinator_expectations(expected: dict, report: CoordinatedReport) -
         )
 
     if "first_priority_source" in expected:
-        assert report.lessons, "lessons: expected at least one lesson to check first_priority_source"
+        assert report.lessons, (
+            "lessons: expected at least one lesson to check first_priority_source"
+        )
         assert report.lessons[0].source == expected["first_priority_source"], (
             f"lessons[0].source: expected {expected['first_priority_source']!r}, "
             f"got {report.lessons[0].source!r}"

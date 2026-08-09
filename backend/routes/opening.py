@@ -31,11 +31,13 @@ class OpeningAnalyzeRequest(BaseModel):
 async def analyze_opening(request: OpeningAnalyzeRequest) -> OpeningReport:
     graph = opening_deps.get_graph()
 
-    result = await graph.ainvoke({
-        "pgn": request.pgn,
-        "fen": request.fen,
-        "user_color": request.user_color,
-    })
+    result = await graph.ainvoke(
+        {
+            "pgn": request.pgn,
+            "fen": request.fen,
+            "user_color": request.user_color,
+        }
+    )
 
     report = result.get("report")
 

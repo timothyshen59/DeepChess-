@@ -166,7 +166,11 @@ async def _extend_better_line(
         None,
     )
 
-    if deviation_index is None or deviation.better_move_san is None:
+    if (
+        deviation_index is None
+        or deviation.better_move_san is None
+        or deviation.better_move_uci is None
+    ):
         return deviation
 
     board = chess.Board(moves[deviation_index]["fen_before"])

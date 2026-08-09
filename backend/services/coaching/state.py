@@ -17,4 +17,3 @@ class CoachingState(TypedDict, total=False):
     annotated_moves: list[AnnotatedMove]
     tactics_report: TacticsReport
     opening_report: OpeningReport
-

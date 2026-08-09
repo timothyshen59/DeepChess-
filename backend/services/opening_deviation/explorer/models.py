@@ -47,7 +47,9 @@ def to_explorer_stats(fen: str, raw: ExplorerApiResponse) -> ExplorerStats:
         opening_name=raw.opening.name if raw.opening else None,
         total_games=raw.white + raw.draws + raw.black,
         moves=[
-            CandidateMove(uci=move.uci, san=move.san, white=move.white, draws=move.draws, black=move.black)
+            CandidateMove(
+                uci=move.uci, san=move.san, white=move.white, draws=move.draws, black=move.black
+            )
             for move in raw.moves
         ],
     )

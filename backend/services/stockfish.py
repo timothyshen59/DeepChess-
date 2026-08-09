@@ -9,7 +9,6 @@ import chess
 import chess.engine
 
 from concurrent.futures import ProcessPoolExecutor
-from concurrent.futures.process import BrokenProcessPool
 
 from pydantic import BaseModel
 
@@ -25,8 +24,8 @@ MATE_SCORE = 10_000
 
 PV_LENGTH = 5
 
-TACTICAL_ANALYSIS_DEPTH = 25 
-TACTICAL_PV_LIMIT=8
+TACTICAL_ANALYSIS_DEPTH = 25
+TACTICAL_PV_LIMIT = 8
 
 QUALITY_THRESHOLDS = [
     ("brilliant", float("-inf"), 0),
@@ -44,6 +43,7 @@ QUALITY_COLORS = {
     "blunder": "#c93b3b",
     "unknown": "#888888",
 }
+
 
 class MoveEvaluation(BaseModel):
     """Neutral engine-evaluation result, owned by this infra module.
@@ -65,21 +65,26 @@ class MoveEvaluation(BaseModel):
 class StockfishUnavailableError(RuntimeError):
     """Stockfish or the analysis worker pool cannot be used."""
 
+
 class StockfishAnalysisError(RuntimeError):
     """A game analysis cannot produce a reliable result."""
 
-_ENGINE: chess.engine.SimpleEngine | None = None 
-_EXECUTOR: ProcessPoolExecutor | None = None 
+
+_ENGINE: chess.engine.SimpleEngine | None = None
+_EXECUTOR: ProcessPoolExecutor | None = None
+
 
 def _start_stockfish_worker(stockfish_path: str, threads: int, hash_mb: int) -> None:
     global _ENGINE
 
     try:
         _ENGINE = chess.engine.SimpleEngine.popen_uci(stockfish_path)
-        _ENGINE.configure({
-            "Threads": threads,
-            "Hash": hash_mb,
-        })
+        _ENGINE.configure(
+            {
+                "Threads": threads,
+                "Hash": hash_mb,
+            }
+        )
 
         # SimpleEngine runs UCI communication on a non-daemon background
         # thread. Without closing it, a worker that has evaluated at least
@@ -103,52 +108,56 @@ def _start_stockfish_worker(stockfish_path: str, threads: int, hash_mb: int) -> 
             hash_mb,
         )
         raise StockfishUnavailableError("Stockfish worker could not start.") from error
-        
-def start_stockfish_pool() -> None: 
+
+
+def start_stockfish_pool() -> None:
     """Call once during FastAPI lifespan startup"""
     global _EXECUTOR
-    
-    if _EXECUTOR is not None: 
-        return 
-    
-    try: 
-        _EXECUTOR = ProcessPoolExecutor( 
-            max_workers=MAX_WORKERS, 
-            initializer=_start_stockfish_worker, 
+
+    if _EXECUTOR is not None:
+        return
+
+    try:
+        _EXECUTOR = ProcessPoolExecutor(
+            max_workers=MAX_WORKERS,
+            initializer=_start_stockfish_worker,
             initargs=(
                 STOCKFISH_PATH,
                 STOCKFISH_THREADS,
                 STOCKFISH_HASH_MB,
             ),
         )
-        
+
         logger.info(
             "Created Stockfish process pool. workers=%s nodes=%s",
             MAX_WORKERS,
             STOCKFISH_NODES,
         )
-        
+
     except Exception as error:
         logger.exception("Could not create Stockfish process pool.")
         raise StockfishUnavailableError("Stockfish analysis service is unavailable.") from error
 
-def stop_stockfish_pool() -> None: 
+
+def stop_stockfish_pool() -> None:
     """Call once during FastAPI shutdown"""
-    global _EXECUTOR 
-    
-    if _EXECUTOR is None: 
-        return 
-    
+    global _EXECUTOR
+
+    if _EXECUTOR is None:
+        return
+
     logger.info("Stopping Stockfish process pool.")
-    
+
     _EXECUTOR.shutdown(wait=True, cancel_futures=True)
-    _EXECUTOR = None 
-    
+    _EXECUTOR = None
+
+
 def _get_executor() -> ProcessPoolExecutor:
     if _EXECUTOR is None:
         raise StockfishUnavailableError("Stockfish pool has not started.")
 
     return _EXECUTOR
+
 
 def cp_loss_to_quality(cp_loss: float | None) -> str:
     if cp_loss is None:
@@ -160,41 +169,46 @@ def cp_loss_to_quality(cp_loss: float | None) -> str:
 
     return "unknown"
 
-def _calculate_cp_loss(best_eval_cp: int | None, played_eval_cp: int | None,  color: str) -> int | None: 
-    if best_eval_cp is None or played_eval_cp is None: 
-        return None 
-    
-    if color == "white": 
-        return max(0, best_eval_cp - played_eval_cp) 
-    
+
+def _calculate_cp_loss(
+    best_eval_cp: int | None, played_eval_cp: int | None, color: str
+) -> int | None:
+    if best_eval_cp is None or played_eval_cp is None:
+        return None
+
+    if color == "white":
+        return max(0, best_eval_cp - played_eval_cp)
+
     return max(0, played_eval_cp - best_eval_cp)
 
 
-#TODO: Rewrite with more better varialbe names 
-def _evaluate_move(fen_before: str, move_uci: str) -> dict: 
-    try: 
+# TODO: Rewrite with more better varialbe names
+def _evaluate_move(fen_before: str, move_uci: str) -> dict:
+    try:
         if _ENGINE is None:
             raise RuntimeError("Stockfish worker has not started.")
-        
-        board = chess.Board(fen_before) 
+
+        board = chess.Board(fen_before)
         played_move = chess.Move.from_uci(move_uci)
-        
+
         if played_move not in board.legal_moves:
             raise ValueError(f"Illegal move: {move_uci}")
-        
-        best_info = _ENGINE.analyse( board, chess.engine.Limit(nodes=STOCKFISH_NODES))
-        
-        best_eval_cp = best_info["score"].white().score(mate_score=MATE_SCORE) 
-        best_move_uci = best_info["pv"][0].uci() 
+
+        best_info = _ENGINE.analyse(board, chess.engine.Limit(nodes=STOCKFISH_NODES))
+
+        best_eval_cp = best_info["score"].white().score(mate_score=MATE_SCORE)
+        best_move_uci = best_info["pv"][0].uci()
         principal_variation = [pv_move.uci() for pv_move in best_info.get("pv", [])[:PV_LENGTH]]
-        
-        if move_uci == best_move_uci: 
-            played_eval_cp = best_eval_cp 
-            
-        else: 
-            played_info = _ENGINE.analyse(board, chess.engine.Limit(nodes=STOCKFISH_NODES), root_moves=[played_move])
+
+        if move_uci == best_move_uci:
+            played_eval_cp = best_eval_cp
+
+        else:
+            played_info = _ENGINE.analyse(
+                board, chess.engine.Limit(nodes=STOCKFISH_NODES), root_moves=[played_move]
+            )
             played_eval_cp = played_info["score"].white().score(mate_score=MATE_SCORE)
-            
+
         return {
             "ok": True,
             "best_eval_cp": best_eval_cp,
@@ -206,19 +220,17 @@ def _evaluate_move(fen_before: str, move_uci: str) -> dict:
     except Exception as exc:
         import traceback
 
-        print(
-            f"STOCKFISH WORKER ERROR for {move_uci}:\n"
-            f"{traceback.format_exc()}"
-        )
+        print(f"STOCKFISH WORKER ERROR for {move_uci}:\n{traceback.format_exc()}")
 
         return {
             "ok": False,
             "best_eval_cp": None,
             "played_eval_cp": None,
-            "principal_variation": None, 
+            "principal_variation": None,
             "best_move_uci": None,
             "error": str(exc),
         }
+
 
 def _submit_evaluations(executor: ProcessPoolExecutor, moves: list[dict]) -> list:
     return [
@@ -236,9 +248,7 @@ def _finalize_annotations(moves: list[dict], results: list[dict]) -> dict:
     total_positions = len(results)
 
     if failed_positions / total_positions > MAX_FAILURE_RATE:
-        raise StockfishAnalysisError(
-            "Too many positions failed to evaluate."
-        )
+        raise StockfishAnalysisError("Too many positions failed to evaluate.")
 
     annotated = []
 
@@ -251,14 +261,16 @@ def _finalize_annotations(moves: list[dict], results: list[dict]) -> dict:
 
         quality = cp_loss_to_quality(cp_loss)
 
-        annotated.append({
-            **move,
-            "cp_loss": cp_loss,
-            "best_move_uci": result["best_move_uci"],
-            "principal_variation": result["principal_variation"],
-            "quality": quality,
-            "color_hex": QUALITY_COLORS[quality],
-        })
+        annotated.append(
+            {
+                **move,
+                "cp_loss": cp_loss,
+                "best_move_uci": result["best_move_uci"],
+                "principal_variation": result["principal_variation"],
+                "quality": quality,
+                "color_hex": QUALITY_COLORS[quality],
+            }
+        )
 
     return {
         "moves": annotated,
@@ -305,63 +317,55 @@ async def aannotate_moves(moves: list[dict]) -> dict:
 
     executor = _get_executor()
     futures = _submit_evaluations(executor, moves)
-    results = await asyncio.gather(
-        *(asyncio.wrap_future(future) for future in futures)
-    )
+    results = await asyncio.gather(*(asyncio.wrap_future(future) for future in futures))
 
     return _finalize_annotations(moves, results)
 
 
-
 def analyze_tactical_candidate(fen_before: str, played_move_uci: str) -> MoveEvaluation:
-    if _ENGINE is None: 
+    if _ENGINE is None:
         raise RuntimeError("Stockfish worker has not started")
-    
+
     board = chess.Board(fen_before)
     played_move = chess.Move.from_uci(played_move_uci)
-    
+
     if played_move not in board.legal_moves:
         raise ValueError(f"Illegal move: {played_move_uci}")
 
     limit = chess.engine.Limit(depth=TACTICAL_ANALYSIS_DEPTH)
     analysis = _ENGINE.analyse(board, limit)
-    
+
     pv = analysis["pv"][:TACTICAL_PV_LIMIT]
-    
+
     if not pv:
         raise RuntimeError("Stockfish returned no principal variation.")
-    
+
     evaluation = analysis["score"].pov(board.turn)
     evaluation_cp = evaluation.score(mate_score=MATE_SCORE)
-    mate_in_plies = evaluation.mate() 
-    
-    if pv[0] == played_move: 
-        move_cp = evaluation_cp 
-    else: 
-        player_analysis = _ENGINE.analyse(board, limit, root_moves=[played_move])
-        move_cp = (player_analysis["score"].pov(board.turn).score(mate_score=MATE_SCORE))
+    mate_in_plies = evaluation.mate()
 
-    position = board.copy() 
-    pv_san = [] 
-    
-    for move in pv: 
+    if pv[0] == played_move:
+        move_cp = evaluation_cp
+    else:
+        player_analysis = _ENGINE.analyse(board, limit, root_moves=[played_move])
+        move_cp = player_analysis["score"].pov(board.turn).score(mate_score=MATE_SCORE)
+
+    position = board.copy()
+    pv_san = []
+
+    for move in pv:
         pv_san.append(position.san(move))
         position.push(move)
-        
+
     return MoveEvaluation(
         best_move_uci=pv[0].uci(),
-        best_move_san=board.san(pv[0]), 
-        cp_loss=max(0, evaluation_cp - move_cp), 
+        best_move_san=board.san(pv[0]),
+        cp_loss=max(0, evaluation_cp - move_cp),
         pv_uci=[move.uci() for move in pv],
         pv_san=pv_san,
         depth=TACTICAL_ANALYSIS_DEPTH,
         mate_in_plies=mate_in_plies,
-
     )
-    
-    
+
+
 atexit.register(stop_stockfish_pool)
-
-    
-
-    

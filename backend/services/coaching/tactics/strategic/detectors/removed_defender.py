@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import chess
 
 from ..models import BoardDelta, RemovedDefender, StrategicFact
 
 
 class RemovedDefenderDetector:
-    def detect(self, delta: BoardDelta) -> list[StrategicFact]:
+    def detect(self, delta: BoardDelta) -> Sequence[StrategicFact]:
         before = delta.board_before
         after = delta.board_after
 

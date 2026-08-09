@@ -15,7 +15,11 @@ import chess
 
 from services.opening_deviation.cache.repository import SqliteOpeningCacheRepository
 from services.opening_deviation.config import OpeningDeviationSettings
-from services.opening_deviation.models.opening import CandidateMove, ExplorerStats, canonical_fen_key
+from services.opening_deviation.models.opening import (
+    CandidateMove,
+    ExplorerStats,
+    canonical_fen_key,
+)
 from services.opening_deviation.warmup.builder import WarmupBuilder
 
 START = chess.STARTING_FEN
@@ -88,7 +92,9 @@ class WarmupBuilderTests(unittest.IsolatedAsyncioTestCase):
             after_a3: ExplorerStats(fen=after_a3, total_games=10, moves=[]),
         }
         explorer_client = FakeExplorerClient(responses)
-        builder = WarmupBuilder(self._repository, explorer_client, _settings(warmup_min_frequency_to_expand=0.10))
+        builder = WarmupBuilder(
+            self._repository, explorer_client, _settings(warmup_min_frequency_to_expand=0.10)
+        )
 
         await builder.run()
 
@@ -142,30 +148,38 @@ class WarmupBuilderTests(unittest.IsolatedAsyncioTestCase):
                 ],
             ),
             after_nf3: ExplorerStats(
-                fen=after_nf3, total_games=900,
+                fen=after_nf3,
+                total_games=900,
                 moves=[CandidateMove(uci="g8f6", white=500, draws=300, black=100)],
             ),
             after_nf3_nf6: ExplorerStats(
-                fen=after_nf3_nf6, total_games=900,
+                fen=after_nf3_nf6,
+                total_games=900,
                 moves=[CandidateMove(uci="c2c4", white=500, draws=300, black=100)],
             ),
             after_c4: ExplorerStats(
-                fen=after_c4, total_games=100,
+                fen=after_c4,
+                total_games=100,
                 moves=[CandidateMove(uci="g8f6", white=60, draws=30, black=10)],
             ),
             after_c4_nf6: ExplorerStats(
-                fen=after_c4_nf6, total_games=100,
+                fen=after_c4_nf6,
+                total_games=100,
                 moves=[CandidateMove(uci="g1f3", white=60, draws=30, black=10)],
             ),
             via_nf3_first: ExplorerStats(fen=via_nf3_first, total_games=50, moves=[]),
         }
         explorer_client = FakeExplorerClient(responses)
-        builder = WarmupBuilder(self._repository, explorer_client, _settings(warmup_min_frequency_to_expand=0.0))
+        builder = WarmupBuilder(
+            self._repository, explorer_client, _settings(warmup_min_frequency_to_expand=0.0)
+        )
 
         await builder.run()
 
         transposed_key = canonical_fen_key(via_nf3_first)
-        fetch_count = sum(1 for fen in explorer_client.fetch_calls if canonical_fen_key(fen) == transposed_key)
+        fetch_count = sum(
+            1 for fen in explorer_client.fetch_calls if canonical_fen_key(fen) == transposed_key
+        )
         self.assertEqual(fetch_count, 1)
 
     async def test_paces_requests_with_the_configured_delay(self) -> None:
@@ -174,7 +188,9 @@ class WarmupBuilderTests(unittest.IsolatedAsyncioTestCase):
         asyncio.sleep to a no-op so the test itself doesn't wait."""
         stats = ExplorerStats(fen=START, total_games=1000, moves=[])
         explorer_client = FakeExplorerClient({START: stats})
-        builder = WarmupBuilder(self._repository, explorer_client, _settings(warmup_request_delay_seconds=1.5))
+        builder = WarmupBuilder(
+            self._repository, explorer_client, _settings(warmup_request_delay_seconds=1.5)
+        )
 
         with patch("services.opening_deviation.warmup.builder.asyncio.sleep") as mock_sleep:
             await builder.run()

@@ -97,7 +97,9 @@ class LichessExplorerClientRateLimitTests(unittest.IsolatedAsyncioTestCase):
     keep these tests instant -- no real waiting, no patching asyncio.sleep."""
 
     async def test_retries_after_429_and_succeeds(self) -> None:
-        client = LichessExplorerClient(_settings(explorer_max_retries=2, explorer_retry_backoff_seconds=0.0))
+        client = LichessExplorerClient(
+            _settings(explorer_max_retries=2, explorer_retry_backoff_seconds=0.0)
+        )
         attempts = {"count": 0}
 
         def handler(request: httpx.Request) -> httpx.Response:
@@ -117,7 +119,9 @@ class LichessExplorerClientRateLimitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(attempts["count"], 2)
 
     async def test_gives_up_after_max_retries_and_returns_none(self) -> None:
-        client = LichessExplorerClient(_settings(explorer_max_retries=2, explorer_retry_backoff_seconds=0.0))
+        client = LichessExplorerClient(
+            _settings(explorer_max_retries=2, explorer_retry_backoff_seconds=0.0)
+        )
         attempts = {"count": 0}
 
         def handler(_request: httpx.Request) -> httpx.Response:
@@ -135,7 +139,9 @@ class LichessExplorerClientRateLimitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(attempts["count"], 3)  # initial attempt + 2 retries
 
     async def test_backs_off_exponentially_without_a_retry_after_header(self) -> None:
-        client = LichessExplorerClient(_settings(explorer_max_retries=2, explorer_retry_backoff_seconds=0.0))
+        client = LichessExplorerClient(
+            _settings(explorer_max_retries=2, explorer_retry_backoff_seconds=0.0)
+        )
 
         def handler(_request: httpx.Request) -> httpx.Response:
             return httpx.Response(429)  # no Retry-After header at all

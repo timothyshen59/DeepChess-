@@ -47,13 +47,15 @@ def extract_moves(pgn_text: str) -> list[dict]:
 
         board.push(move)
 
-        moves.append({
-            "move_number": move_number,
-            "move_san": san,
-            "move_uci": move.uci(),
-            "fen_before": fen_before,
-            "fen_after": board.fen(),
-            "color": color,
-        })
+        moves.append(
+            {
+                "move_number": move_number,
+                "move_san": san,
+                "move_uci": move.uci(),
+                "fen_before": fen_before,
+                "fen_after": board.fen(),
+                "color": color,
+            }
+        )
 
     return moves

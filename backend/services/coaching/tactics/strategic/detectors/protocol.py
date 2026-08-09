@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
 from ..models import BoardDelta, StrategicFact
@@ -14,7 +15,7 @@ class StrategicDetector(Protocol):
     board state, call other detectors, invoke engines, or perform I/O.
     """
 
-    def detect(self, delta: BoardDelta) -> list[StrategicFact]:
+    def detect(self, delta: BoardDelta) -> Sequence[StrategicFact]:
         """
         Return deterministic strategic facts derived from one board transition.
 
