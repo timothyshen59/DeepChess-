@@ -24,17 +24,17 @@
         "minimum_cp_loss": 5000
       },
       {
-        "move_number": 39,
-        "player_color": "white",
-        "category": "defensive",
-        "motif": "hanging_piece",
-        "minimum_cp_loss": 5000
-      },
-      {
         "move_number": 15,
         "player_color": "white",
         "category": "defensive",
         "motif": "king_safety",
+        "minimum_cp_loss": 250
+      },
+      {
+        "move_number": 16,
+        "player_color": "white",
+        "category": "defensive",
+        "motif": "hanging_piece",
         "minimum_cp_loss": 250
       }
     ]

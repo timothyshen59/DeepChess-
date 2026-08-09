@@ -30,3 +30,8 @@ lerna-debug.log*
 annotated_moves.json
 strategic_explanations.json
 tactics_report.json
+
+# Local Lichess Explorer cache -- mutates on every live run (local or CI),
+# not source. CI persists its own copy via actions/cache in ci.yml instead
+# of git tracking. See services/opening_deviation/config.py.
+backend/services/opening_deviation/data/

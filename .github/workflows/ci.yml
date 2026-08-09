@@ -129,6 +129,19 @@ jobs:
       - name: Install Stockfish
         run: sudo apt-get update && sudo apt-get install -y stockfish
 
+      - name: Restore Lichess Explorer cache
+        # Persisted across workflow runs by GitHub Actions itself -- not
+        # git-tracked (see backend/.gitignore). First run after this cache
+        # is created (or evicted after 7 days unused) cold-starts once;
+        # every run after reuses it, so live Lichess calls/rate-limit
+        # exposure shrink over time instead of starting fresh every run.
+        uses: actions/cache@v4
+        with:
+          path: backend/services/opening_deviation/data/opening_cache.sqlite3
+          key: lichess-cache-v1
+          restore-keys: |
+            lichess-cache-
+
       - name: Run e2e tests
         env:
           LICHESS_API_TOKEN: ${{ secrets.LICHESS_API_TOKEN }}
