@@ -86,6 +86,10 @@ jobs:
         run: uv run pytest -v
 
   integration-tests:
+    needs: 
+      - lint 
+      - typecheck 
+      - unit-tests
     name: Integration tests (real Stockfish)
     runs-on: ubuntu-latest
     steps:
@@ -100,7 +104,11 @@ jobs:
         run: uv sync --locked
 
       - name: Install Stockfish
-        run: sudo apt-get update && sudo apt-get install -y stockfish
+        # Pinned so CI doesn't silently drift over time as Ubuntu's apt
+        # archive updates the package -- 16-1build1 is what ubuntu-latest
+        # (24.04/noble) resolves to as of writing. Bump deliberately if a
+        # newer version is ever needed; don't let it float.
+        run: sudo apt-get update && sudo apt-get install -y stockfish=16-1build1
 
       - name: Run integration tests
         env:
@@ -112,6 +120,7 @@ jobs:
         run: uv run pytest -m integration -v
 
   e2e-tests:
+    needs: integration-tests
     name: E2E tests (main only)
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -127,7 +136,11 @@ jobs:
         run: uv sync --locked
 
       - name: Install Stockfish
-        run: sudo apt-get update && sudo apt-get install -y stockfish
+        # Pinned so CI doesn't silently drift over time as Ubuntu's apt
+        # archive updates the package -- 16-1build1 is what ubuntu-latest
+        # (24.04/noble) resolves to as of writing. Bump deliberately if a
+        # newer version is ever needed; don't let it float.
+        run: sudo apt-get update && sudo apt-get install -y stockfish=16-1build1
 
       - name: Restore Lichess Explorer cache
         # Persisted across workflow runs by GitHub Actions itself -- not
