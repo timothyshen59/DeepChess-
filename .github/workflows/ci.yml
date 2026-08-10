@@ -108,7 +108,7 @@ jobs:
           # a standard 2-core GitHub-hosted runner mildly oversubscribes at
           # the default, and these tests don't need deep search.
           MAX_WORKERS: "2"
-          STOCKFISH_NODES: "50000"
+          STOCKFISH_NODES: "100000"
         run: uv run pytest -m integration -v
 
   e2e-tests:

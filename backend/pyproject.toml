@@ -51,6 +51,18 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = ["-m", "not e2e and not integration"]
+# Session-scoped async fixtures (tests/e2e/test_coaching_pipeline.py's
+# opening_deps -- constructs a real httpx.AsyncClient once per session)
+# otherwise get bound to whichever test's event loop happens to trigger
+# their first real I/O, then blow up with "Event loop is closed" the
+# moment a *different* test (running under pytest-asyncio's default
+# fresh-loop-per-function) reuses them. Matches the fixtures' actual
+# "set up once per session" intent instead of fighting it. Both settings
+# are needed -- fixture-loop-scope alone doesn't change the *test
+# function's* own loop, which is what actually churns per parametrized
+# case under the default "function" test-loop-scope.
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 markers = [
     "e2e: full end-to-end tests using a real Stockfish engine and real graphs; requires a local `stockfish` binary. Run with `pytest -m e2e`; excluded by default via `addopts` below (pass `-m e2e` explicitly to run them).",
     "integration: exercises real infrastructure (a real Stockfish binary) but no external network services; requires a local `stockfish` binary. Run with `pytest -m integration`; excluded by default via `addopts` below.",
