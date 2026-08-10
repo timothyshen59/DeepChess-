@@ -31,7 +31,7 @@
         "minimum_cp_loss": 250
       },
       {
-        "move_number": 39,
+        "move_number": 16,
         "player_color": "white",
         "category": "defensive",
         "motif": "hanging_piece",
