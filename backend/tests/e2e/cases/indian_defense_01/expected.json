@@ -12,7 +12,7 @@
   },
   "tactics_agent": {
     "minimum_critical_mistakes": 0,
-    "maximum_critical_mistakes": 2,
+    "maximum_critical_mistakes": 0,
     "required_mistakes": []
   },
   "coordinator": {
