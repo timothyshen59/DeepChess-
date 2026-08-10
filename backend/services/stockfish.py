@@ -194,6 +194,26 @@ def _evaluate_move(fen_before: str, move_uci: str) -> dict:
         if played_move not in board.legal_moves:
             raise ValueError(f"Illegal move: {move_uci}")
 
+        # _ENGINE is one persistent Stockfish process reused for every
+        # position this worker ever evaluates (its whole process lifetime,
+        # across every test case in a session) -- and python-chess only
+        # sends "ucinewgame" (which clears the hash table) once, the very
+        # first time analyse() is ever called on it, since we never pass a
+        # `game=` token (chess/engine.py's UciProtocol.analysis: it fires
+        # ucinewgame only when self.engine.game != game, and game defaults
+        # to None on both sides forever). Without this, the hash table
+        # accumulates entries from every unrelated prior position, and
+        # since ProcessPoolExecutor hands positions to whichever of
+        # MAX_WORKERS happens to be free, which worker (with which prior
+        # history) evaluates a given position is not reproducible run to
+        # run -- so the same STOCKFISH_NODES budget can still explore a
+        # different line. Clearing once per position (not before the
+        # second analyse() call below -- that one's the same position, so
+        # reusing what the first call just populated is correct) makes
+        # every evaluation start from identical, position-independent
+        # state.
+        _ENGINE.configure({"Clear Hash": None})
+
         best_info = _ENGINE.analyse(board, chess.engine.Limit(nodes=STOCKFISH_NODES))
 
         best_eval_cp = best_info["score"].white().score(mate_score=MATE_SCORE)
