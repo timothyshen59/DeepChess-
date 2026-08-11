@@ -114,7 +114,10 @@ class SelectTopCandidatesTest(unittest.TestCase):
         top = select_top_candidates(candidates)
 
         self.assertEqual(len(top), MAX_DEEP_CANDIDATES)
-        self.assertEqual([c.cp_loss for c in top], sorted((c.cp_loss for c in candidates), reverse=True)[:MAX_DEEP_CANDIDATES])
+        self.assertEqual(
+            [c.cp_loss for c in top],
+            sorted((c.cp_loss for c in candidates), reverse=True)[:MAX_DEEP_CANDIDATES],
+        )
 
     def test_fewer_than_limit_returns_all_unchanged(self) -> None:
         candidates = [_make_candidate(ply=1, cp_loss=500), _make_candidate(ply=2, cp_loss=200)]
@@ -247,7 +250,9 @@ class RunDeepAnalysisWithBackfillTest(unittest.TestCase):
         # deep pass will disprove (cp_loss corrected below the mistake
         # bar) -- backfill must pull candidates 5 and 6 to try to replace
         # them, not just accept a shrunken report.
-        candidates = [_make_candidate(ply=i, cp_loss=1000 - i, fen_before=f"fen-{i}") for i in range(1, 7)]
+        candidates = [
+            _make_candidate(ply=i, cp_loss=1000 - i, fen_before=f"fen-{i}") for i in range(1, 7)
+        ]
         deep_cp_loss_by_fen = {
             "fen-1": 900,  # real mistake, survives
             "fen-2": 5,  # false positive, disproven
@@ -274,7 +279,9 @@ class RunDeepAnalysisWithBackfillTest(unittest.TestCase):
     def test_never_exceeds_the_pool_ceiling_even_if_everything_keeps_failing(self) -> None:
         # Far more high-recall candidates than the pool ceiling -- every
         # single one turns out to be a false positive once deep-analyzed.
-        candidates = [_make_candidate(ply=i, cp_loss=1000 - i, fen_before=f"fen-{i}") for i in range(1, 21)]
+        candidates = [
+            _make_candidate(ply=i, cp_loss=1000 - i, fen_before=f"fen-{i}") for i in range(1, 21)
+        ]
         calls: list[list[tuple[str, str]]] = []
 
         def spy(requests: list[tuple[str, str]]) -> list[MoveEvaluation | None]:
@@ -283,7 +290,11 @@ class RunDeepAnalysisWithBackfillTest(unittest.TestCase):
 
         validated = run_deep_analysis_with_backfill(candidates, analyze_batch=spy)
 
-        self.assertEqual(validated, [], "fewer than MAX_DEEP_CANDIDATES survives -- that's accepted, not an error")
+        self.assertEqual(
+            validated,
+            [],
+            "fewer than MAX_DEEP_CANDIDATES survives -- that's accepted, not an error",
+        )
         total_attempted = sum(len(c) for c in calls)
         self.assertEqual(
             total_attempted,
