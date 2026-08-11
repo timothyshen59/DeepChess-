@@ -1,9 +1,9 @@
 # E2E coaching-pipeline regression suite
 
 Runs the real, public pipeline (`services/coaching/pipeline.py::run_coaching_pipeline`
-— real Stockfish, the committed synthetic Polyglot book fixture, the real
-opening/tactics/coordinator graphs) against a real PGN and checks the
-result against a **hand-written, manually-reviewed** `expected.json`.
+— real Stockfish, an opening-deviation engine, the real opening/tactics/
+coordinator graphs) against a real PGN and checks the result against a
+**hand-written, manually-reviewed** `expected.json`.
 
 This suite deliberately does **not**:
 - compare full generated reports against exact JSON snapshots,
@@ -97,17 +97,20 @@ Field paths correspond directly to the real Pydantic schemas
 
 ## Known constraints
 
-- **Opening deviation detection defaults to the committed synthetic
-  fixture book** (`services/coaching/opening/tests/fixtures/najdorf_seed_book.bin`
-  — just the one Najdorf line from `plan.md`'s worked example). Any other
-  opening will legitimately show `deviation.status` diverging almost
-  immediately, or `"book_unavailable"` — that's expected, not a bug.
-  **Set `POLYGLOT_BOOK_PATH`** (same env var the live app's
-  `opening_deps.py` reads) to point this suite at a real book instead —
-  e.g. a local `performance.bin` — for more meaningful deviation detection
-  during local runs. Never rely on this being set: CI has no such file, so
-  every case's assertions must still make sense against the default
-  fixture book, or be written to tolerate `"book_unavailable"`.
+- **Opening deviation detection defaults to a fake, deterministic service**
+  (`services/coaching/opening/tests/fixtures/najdorf_fake_service.py` —
+  just the one Najdorf line from `plan.md`'s worked example, no network,
+  safe for CI). Any other opening will legitimately show `deviation.status`
+  diverging almost immediately, or not resolving meaningfully. **Set
+  `OPENING_DEVIATION_E2E_LIVE=1`** to use the real engine instead
+  (`services/opening_deviation` — a real cache + the live Lichess Opening
+  Explorer API) for meaningful deviation detection against arbitrary games
+  during local runs; `LICHESS_API_TOKEN` is optional (unauthenticated
+  Explorer access works too, at a lower rate limit). CI's own `e2e-tests`
+  job sets `OPENING_DEVIATION_E2E_LIVE=1` with a real token from
+  `secrets.LICHESS_API_TOKEN` — but never rely on that locally by default;
+  every case's assertions must still make sense against the fake service
+  when the env var is unset.
 - **`crucial_mistakes`/`critical_mistakes` are capped at 4 each upstream**,
   independent of this suite (by the tactics and opening agents
   themselves). `CoordinatedReport.lessons` is capped at 10.
@@ -126,7 +129,7 @@ Field paths correspond directly to the real Pydantic schemas
 pytest -m "not e2e"                        # everything else -- fast, no Stockfish, unaffected
 pytest -m e2e tests/e2e -v                  # this suite only
 STOCKFISH_PATH=/usr/bin/stockfish pytest -m e2e tests/e2e -v   # override the engine path (e.g. in CI)
-POLYGLOT_BOOK_PATH=/path/to/performance.bin pytest -m e2e tests/e2e -v   # override the opening book
+OPENING_DEVIATION_E2E_LIVE=1 pytest -m e2e tests/e2e -v        # real Lichess-backed deviation engine instead of the fake service
 ```
 
 With no usable Stockfish binary reachable, every case in this suite skips
@@ -135,10 +138,13 @@ with a clear message instead of erroring.
 ## CI/CD integration
 
 - `pyproject.toml` already registers the `e2e` marker.
-- A CI job needs: a `stockfish` binary on PATH (`apt-get install -y
-  stockfish` on Linux, or set `STOCKFISH_PATH` to wherever it's installed),
-  then `pytest -m e2e tests/e2e` as its own step, separate from the fast
-  `pytest -m "not e2e"` step.
+- `.github/workflows/ci.yml`'s `e2e-tests` job already does this: a
+  version-pinned `stockfish` binary via apt (`STOCKFISH_PATH=/usr/games/
+  stockfish`), `OPENING_DEVIATION_E2E_LIVE=1` with a real
+  `secrets.LICHESS_API_TOKEN`, then `pytest -m e2e -v` as its own step
+  (gated to `main` only). Note this still calls the pipeline in-process via
+  pytest, not over a real HTTP boundary — see the separate `smoke-test`
+  job for that.
 - Per the project's future-testing plan: a faster, frozen-Stockfish-
   annotation tier (skip re-running the engine, feed a saved
   `annotated_moves.json` straight into the tactics graph/coordinator) is

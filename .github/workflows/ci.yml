@@ -21,6 +21,35 @@ env:
   STOCKFISH_PATH: /usr/games/stockfish
 
 jobs:
+  frontend:
+    name: Frontend build / lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # Overrides the workflow-level default (backend) -- this is the
+        # only job that touches frontend/ at all. Before this job existed,
+        # nothing in CI ran npm install/build/lint, so a broken build
+        # (missing-module import, real incident this session) would ship
+        # silently.
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check + build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
   lint:
     name: Lint / format
     runs-on: ubuntu-latest
@@ -160,3 +189,49 @@ jobs:
           LICHESS_API_TOKEN: ${{ secrets.LICHESS_API_TOKEN }}
           OPENING_DEVIATION_E2E_LIVE: "1"
         run: uv run pytest -m e2e -v
+
+  smoke-test:
+    needs: integration-tests
+    name: Smoke test (real HTTP boundary)
+    runs-on: ubuntu-latest
+    # Every other "test" job here calls application code in-process via
+    # pytest -- never boots a real server, so the actual HTTP contract
+    # (routing, request/response serialization, CORS) has zero automated
+    # coverage. This job boots the real uvicorn process and hits it with
+    # real curl requests, the same way a browser/frontend actually would.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Install Stockfish
+        run: sudo apt-get update && sudo apt-get install -y stockfish=16-1build1
+
+      - name: Boot the real server
+        run: |
+          uv run uvicorn main:app --port 8000 &
+          echo $! > /tmp/uvicorn.pid
+          for i in $(seq 1 20); do
+            curl -sf http://127.0.0.1:8000/health > /dev/null && exit 0
+            sleep 1
+          done
+          echo "Server never became healthy" >&2
+          exit 1
+
+      - name: Hit /health and /analyze over real HTTP
+        run: |
+          curl -sf http://127.0.0.1:8000/health | grep -q '"status":"ok"'
+          curl -sf -X POST http://127.0.0.1:8000/analyze \
+            -H "Content-Type: application/json" \
+            -d '{"pgn": "1. e4 e5 2. Nf3 Nc6 3. Bb5"}' \
+            | grep -q '"moves"'
+
+      - name: Stop the server
+        if: always()
+        run: kill "$(cat /tmp/uvicorn.pid)" 2>/dev/null || true
