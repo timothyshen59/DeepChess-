@@ -1,10 +1,12 @@
 import AnalysisBoard from "./AnalysisBoard";
 import PgnLoader from "../components/PgnLoader";
 import CurrentPositionPanel from "./CurrentPositionPanel";
+import CoachingPanel from "./CoachingPanel";
 import MoveList from "./MoveList";
 
 import { useChessTimeline } from "../hooks/useChessTimeline";
 import { useGameAnalysis } from "../hooks/useGameAnalysis";
+import { useCoachingAnalysis } from "../hooks/useCoachingAnalysis";
 import { getMoveLabel } from "../lib/chessFormat";
 import { useArrowNavigation } from "../hooks/arrowNavigation";
 
@@ -12,6 +14,15 @@ import { useArrowNavigation } from "../hooks/arrowNavigation";
 export default function ChessWorkspace() {
     const timeline = useChessTimeline();
     const gameAnalysis = useGameAnalysis(timeline);
+    const coachingAnalysis = useCoachingAnalysis();
+
+    async function loadAndAnalyzeAll(pgn: string) {
+        await gameAnalysis.loadAndAnalyze(pgn);
+        // Independent request/failure path from gameAnalysis -- a coaching
+        // failure (e.g. a PGN the opening agent can't place) shouldn't
+        // block the per-move Stockfish annotations from showing.
+        void coachingAnalysis.loadAndAnalyze(pgn);
+    }
 
     useArrowNavigation({
         onPrevious: timeline.goBack,
@@ -76,7 +87,7 @@ export default function ChessWorkspace() {
                 {/* Right rail */}
                 <aside className="flex h-[640px] min-h-0 flex-col gap-3">
                     <PgnLoader
-                        onLoad={gameAnalysis.loadAndAnalyze}
+                        onLoad={loadAndAnalyzeAll}
                         isLoading={gameAnalysis.isAnalyzing}
                         error={gameAnalysis.error}
                     />
@@ -91,6 +102,14 @@ export default function ChessWorkspace() {
                         currentPly={timeline.currentPly}
                     />
                 </aside>
+            </div>
+
+            <div className="mx-auto w-full max-w-[1120px]">
+                <CoachingPanel
+                    report={coachingAnalysis.report}
+                    isAnalyzing={coachingAnalysis.isAnalyzing}
+                    error={coachingAnalysis.error}
+                />
             </div>
         </section>
     );

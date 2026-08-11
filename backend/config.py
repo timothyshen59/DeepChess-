@@ -31,5 +31,13 @@ class Settings(BaseSettings):
     (services/opening_deviation) and the Stockfish batch to the phase
     that's actually relevant."""
 
+    cors_allow_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    """Comma-separated allowed frontend origins for CORSMiddleware (main.py).
+    Defaults to the local Vite dev server only -- any real deployment needs
+    to set this to the actual deployed frontend origin(s), since a browser
+    will otherwise block the request regardless of whether the backend
+    itself is reachable. Plain comma-separated string, not a list field, to
+    avoid pydantic-settings' JSON-by-default env parsing for list types."""
+
 
 settings = Settings()

@@ -6,7 +6,10 @@ from .analysis.board_state import safe_board
 from .analysis.defensive_features import defensive_feature
 from .analysis.move_features import move_feature
 from .analysis.pv_inspection import inspect_pv
-from .pipeline.candidate_selection import select_candidates
+from services.stockfish import analyze_tactical_candidates_batch
+
+from .pipeline.candidate_selection import rank_candidates, select_candidates
+from .pipeline.deep_analysis import AnalyzeBatch, run_deep_analysis_with_backfill
 from .report.lesson_builder import build_lesson
 from .report.report_builder import build_report
 from .schemas import CandidateFeatures, TacticalCandidate, TacticalLesson
@@ -63,6 +66,35 @@ def select_tactical_candidates(state: TacticsState) -> dict:
         "candidates": candidates,
         "feature_updates": {},
     }
+
+
+def rank_and_select_candidates(state: TacticsState) -> dict:
+    """Rank select_candidates()'s high-recall output by shallow-pass
+    cp_loss, most severe first. No cap here -- run_deep_analysis_node's
+    backfill needs the full ranking to draw from, not just the initial
+    top-N; the pool ceiling (MAX_DEEP_CANDIDATE_POOL) is enforced there."""
+    ranked = rank_candidates(state.get("candidates", []))
+
+    return {"candidates": ranked}
+
+
+def run_deep_analysis_node(
+    state: TacticsState,
+    analyze_batch: AnalyzeBatch = analyze_tactical_candidates_batch,
+) -> dict:
+    """Deep-analyze ranked candidates with backfill (see
+    run_deep_analysis_with_backfill) -- the result is only *validated*
+    tactical mistakes, already capped at MAX_DEEP_CANDIDATES. A candidate
+    the shallow pass flagged but the deep pass disproved never reaches
+    feature extraction or the report. `analyze_batch` is an explicit
+    parameter -- graph.py's build_tactics_graph wraps this in a closure to
+    thread a fake through for tests; production wiring never needs to pass
+    it."""
+    deep_candidates = run_deep_analysis_with_backfill(
+        state.get("candidates", []), analyze_batch=analyze_batch
+    )
+
+    return {"candidates": deep_candidates}
 
 
 def compute_best_move_features(state: TacticsState) -> dict:

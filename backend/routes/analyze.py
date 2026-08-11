@@ -26,6 +26,11 @@ class MoveAnnotation(BaseModel):
     quality: str
     color_hex: str
     principal_variation: list[str]
+    # Already computed by services.stockfish.annotate_moves (the underlying
+    # dict has always had this key) -- just never declared here, so FastAPI's
+    # response_model filtering silently dropped it. None when evaluation
+    # failed for this position (see stockfish.py's failure branch).
+    best_move_uci: str | None
 
 
 class AnalyzeResponse(BaseModel):

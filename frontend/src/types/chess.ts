@@ -38,7 +38,7 @@ export interface MoveAnnotation {
     quality: string;
     color_hex: string;
     principal_variation: string[];
-    best_move_uci: string;
+    best_move_uci: string | null;
 }
 
 export interface AnalysisResponse {

@@ -17,8 +17,8 @@
     "minimum_critical_mistakes": 3,
     "required_mistakes": [
       {
-        "move_number": 40,
-        "player_color": "black",
+        "move_number": 38,
+        "player_color": "white",
         "category": "defensive",
         "motif": "hanging_piece",
         "minimum_cp_loss": 5000

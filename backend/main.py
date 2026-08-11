@@ -4,10 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes.analyze import router as analyze_router
+from routes.coaching import router as coaching_router
 from routes.predict import router as predict_router
 from routes.opening import router as opening_router
 from routes.opening_deviation import router as opening_deviation_router
 
+from config import settings
 from services.transformer import load_model
 from services.stockfish import start_stockfish_pool, stop_stockfish_pool
 from services.coaching.opening import opening_deps
@@ -41,13 +43,17 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    # Configurable via CORS_ALLOW_ORIGINS (config.py) -- defaults to the
+    # local Vite dev server only, but a real deployment needs to set this
+    # to the actual deployed frontend origin(s).
+    allow_origins=[origin.strip() for origin in settings.cors_allow_origins.split(",")],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,
 )
 
 app.include_router(analyze_router)
+app.include_router(coaching_router)
 app.include_router(predict_router)
 app.include_router(opening_router)
 app.include_router(opening_deviation_router)

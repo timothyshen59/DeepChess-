@@ -24,7 +24,13 @@ MATE_SCORE = 10_000
 
 PV_LENGTH = 5
 
-TACTICAL_ANALYSIS_DEPTH = 25
+# Deep pass: a much larger node budget than the shallow annotate_moves()
+# pass (STOCKFISH_NODES), applied only to the handful of candidates a
+# tactics-agent caller has already flagged as suspicious -- not every
+# move. Node-based, matching STOCKFISH_NODES's own limit type, rather than
+# a depth limit -- depth-to-node correspondence varies by position, so a
+# fixed depth doesn't give a predictable cost the way a node cap does.
+STOCKFISH_DEEP_NODES = int(os.getenv("STOCKFISH_DEEP_NODES", "1_000_000"))
 TACTICAL_PV_LIMIT = 8
 
 QUALITY_THRESHOLDS = [
@@ -343,6 +349,14 @@ async def aannotate_moves(moves: list[dict]) -> dict:
 
 
 def analyze_tactical_candidate(fen_before: str, played_move_uci: str) -> MoveEvaluation:
+    """Deep re-analysis of one already-flagged tactical candidate.
+
+    Meant to run on a small, pre-filtered set of positions (see
+    services/coaching/tactics/pipeline/deep_analysis.py) -- STOCKFISH_DEEP_NODES
+    is 10x the shallow annotate_moves() budget, so calling this per-move
+    across a whole game would be far more expensive than the shallow pass
+    for no benefit on the moves that aren't mistakes.
+    """
     if _ENGINE is None:
         raise RuntimeError("Stockfish worker has not started")
 
@@ -352,7 +366,13 @@ def analyze_tactical_candidate(fen_before: str, played_move_uci: str) -> MoveEva
     if played_move not in board.legal_moves:
         raise ValueError(f"Illegal move: {played_move_uci}")
 
-    limit = chess.engine.Limit(depth=TACTICAL_ANALYSIS_DEPTH)
+    # Same persistent-worker hash-pollution issue _evaluate_move has (see
+    # its comment) -- this call reuses the same long-lived _ENGINE, so
+    # without this, a deep search's result could still depend on whatever
+    # unrelated positions this worker evaluated before it.
+    _ENGINE.configure({"Clear Hash": None})
+
+    limit = chess.engine.Limit(nodes=STOCKFISH_DEEP_NODES)
     analysis = _ENGINE.analyse(board, limit)
 
     pv = analysis["pv"][:TACTICAL_PV_LIMIT]
@@ -363,6 +383,10 @@ def analyze_tactical_candidate(fen_before: str, played_move_uci: str) -> MoveEva
     evaluation = analysis["score"].pov(board.turn)
     evaluation_cp = evaluation.score(mate_score=MATE_SCORE)
     mate_in_plies = evaluation.mate()
+    # Actual depth reached within the node budget, not a fixed constant --
+    # meaningful now that the limit is node-based, not depth-based, so how
+    # deep a given position gets searched in that budget varies.
+    reached_depth = analysis.get("depth", 0)
 
     if pv[0] == played_move:
         move_cp = evaluation_cp
@@ -383,9 +407,42 @@ def analyze_tactical_candidate(fen_before: str, played_move_uci: str) -> MoveEva
         cp_loss=max(0, evaluation_cp - move_cp),
         pv_uci=[move.uci() for move in pv],
         pv_san=pv_san,
-        depth=TACTICAL_ANALYSIS_DEPTH,
+        depth=reached_depth,
         mate_in_plies=mate_in_plies,
     )
+
+
+def analyze_tactical_candidates_batch(
+    requests: list[tuple[str, str]],
+) -> list[MoveEvaluation | None]:
+    """Deep-analyze a small, pre-filtered batch of candidates concurrently.
+
+    Mirrors _submit_evaluations/annotate_moves's existing submit-then-gather
+    shape, but for analyze_tactical_candidate instead of _evaluate_move, and
+    reports per-request failure as `None` in the corresponding result slot
+    rather than raising -- one candidate's Stockfish timeout/error/missing-PV
+    shouldn't invalidate the others (see analyze_tactical_candidate's own
+    raises: RuntimeError on no PV, ValueError on an illegal move).
+    """
+    if not requests:
+        return []
+
+    executor = _get_executor()
+    futures = [
+        executor.submit(analyze_tactical_candidate, fen_before, played_move_uci)
+        for fen_before, played_move_uci in requests
+    ]
+
+    results: list[MoveEvaluation | None] = []
+
+    for future in futures:
+        try:
+            results.append(future.result())
+        except Exception as exc:
+            logger.warning("Deep tactical analysis failed for one candidate: %s", exc)
+            results.append(None)
+
+    return results
 
 
 atexit.register(stop_stockfish_pool)
